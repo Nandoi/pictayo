@@ -1,4 +1,24 @@
-/* Commit 1: temporary feedback after a manual photo capture. */
+/* Commit 1: gentle shutter flash, saved confirmation, and thumbnail feedback. */
+
+/* Avoid the dark countdown tint during the photo flash. */
+.countdown-overlay:has(.flash-screen) {
+  background: transparent;
+}
+
+/* Let the camera remain visible through a slower, softer white pulse. */
+.countdown-overlay .flash-screen {
+  background: #ffffff;
+  opacity: 0;
+  animation: pictayo-gentle-flash 750ms ease-out both;
+}
+
+@keyframes pictayo-gentle-flash {
+  0% { opacity: 0; }
+  22% { opacity: .32; }
+  50% { opacity: .18; }
+  100% { opacity: 0; }
+}
+
 
 .booth-camera-frame {
   position: relative;
@@ -67,7 +87,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .booth-saved-feedback,
-  .booth-shots-row .shot-thumb-new img {
+  .booth-shots-row .shot-thumb-new img,
+  .countdown-overlay .flash-screen {
     animation: none;
   }
+  .countdown-overlay .flash-screen { opacity: 0; }
 }

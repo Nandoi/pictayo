@@ -7,7 +7,7 @@ import type { PhotoSlots, StripTheme } from './strip'
 import './capture-feedback.css'
 
 const COUNTDOWN_SECONDS = 3
-const FLASH_DURATION = 220
+const FLASH_DURATION = 750
 const SAVED_FEEDBACK_DURATION = 1800
 
 const sleep = (ms: number) =>
