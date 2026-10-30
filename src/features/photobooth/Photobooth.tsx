@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { CameraPreview } from '../camera/CameraPreview'
 import { capturePhoto } from '../camera/camera'
 import { useCamera } from '../camera/useCamera'
-import { dateLabel, downloadStrip, PHOTO_COUNT, THEMES } from './strip'
+import { drawStripFooter, downloadStrip, PHOTO_COUNT, STRIP_HEIGHT, STRIP_WIDTH, THEMES } from './strip'
 import type { PhotoSlots, StripTheme } from './strip'
 import './capture-feedback.css'
 
@@ -315,20 +315,28 @@ function StripPreview({
   showDate,
   createdAt,
 }: StripPreviewProps) {
+  const footerCanvasRef = useRef<HTMLCanvasElement>(null)
+
+  // The preview's text is painted with exactly the same coordinates and
+  // font-measuring logic as the downloaded PNG; only the canvas is scaled.
+  useEffect(() => {
+    const canvas = footerCanvasRef.current
+    const ctx = canvas?.getContext('2d')
+    if (!ctx) return
+
+    ctx.clearRect(0, 0, STRIP_WIDTH, STRIP_HEIGHT)
+    drawStripFooter(ctx, theme, caption, showDate, createdAt)
+  }, [theme, caption, showDate, createdAt])
+
   return (
     <div
       className="strip"
       style={{ backgroundColor: theme.background, color: theme.ink }}
       aria-label="Photo strip preview"
     >
-      <div className="strip-header" />
       <div className="strip-frames">
         {Array.from({ length: PHOTO_COUNT }, (_, index) => (
-          <div
-            key={index}
-            className="strip-frame"
-            style={{ backgroundColor: theme.frame, borderColor: theme.photoMat }}
-          >
+          <div key={index} className="strip-frame">
             {photos[index] ? (
               <img src={photos[index]} alt={`Strip photo ${index + 1}`} />
             ) : (
@@ -337,22 +345,13 @@ function StripPreview({
           </div>
         ))}
       </div>
-      <div className="strip-footer">
-        <span className="strip-accent" style={{ backgroundColor: theme.accent }} />
-        {caption.trim() && (
-          <strong
-            style={{
-              fontFamily: theme.font,
-              fontSize: caption.length > 30 ? 8 : caption.length > 23 ? 10 : 13,
-            }}
-          >
-            {caption.trim()}
-          </strong>
-        )}
-        {showDate && (
-          <span className="strip-date">{dateLabel(createdAt).toUpperCase()}</span>
-        )}
-      </div>
+      <canvas
+        ref={footerCanvasRef}
+        className="strip-text-layer"
+        width={STRIP_WIDTH}
+        height={STRIP_HEIGHT}
+        aria-hidden="true"
+      />
     </div>
   )
 }
@@ -485,17 +484,20 @@ export function Photobooth() {
                       }`}
                       onClick={() => setThemeId(option.id)}
                       aria-pressed={themeId === option.id}
+                      title={option.detail}
                     >
                       <span
                         className="theme-swatch"
-                        style={{
-                          backgroundColor: option.background,
-                          borderColor: option.photoMat,
-                        }}
+                        style={{ backgroundColor: option.background }}
+                        aria-hidden="true"
                       >
-                        <span style={{ backgroundColor: option.frame }} />
-                        <span style={{ backgroundColor: option.frame }} />
-                        <span style={{ backgroundColor: option.frame }} />
+                        <span className="theme-mini-photos">
+                          {photos.map((photo, index) => (
+                            <span className="theme-mini-photo" key={index}>
+                              {photo && <img src={photo} alt="" />}
+                            </span>
+                          ))}
+                        </span>
                       </span>
                       <span className="theme-name">{option.name}</span>
                     </button>
