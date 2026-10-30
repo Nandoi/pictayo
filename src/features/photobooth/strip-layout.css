@@ -1,11 +1,7 @@
-
-/* PicTayo strip layout.
-   Matches the geometry used by strip.ts. */
-
-.strip .strip-header,
-.strip .strip-accent {
-  display: none;
-}
+/* PicTayo photo-strip refresh.
+   Match the 1200 × 3200 export geometry in strip.ts:
+   left 56px, top 72px, width 1088px, four 658px photos, 14px gaps.
+   Photos are borderless. The rest of the strip is background only. */
 
 .strip .strip-frames {
   top: 2.25%;
@@ -13,7 +9,6 @@
   right: 4.6666667%;
   width: auto;
   height: 83.5625%;
-
   grid-template-rows: repeat(4, minmax(0, 1fr));
   gap: 0.52356%;
 }
@@ -32,8 +27,7 @@
   object-fit: cover;
 }
 
-/* Bottom area remains open for optional text. */
-
+/* The footer begins immediately after the fourth photo. */
 .strip .strip-footer {
   top: 85.8125%;
   left: 4.6666667%;
@@ -56,8 +50,69 @@
   font-size: 6px;
 }
 
-/* Six background options, in two rows. */
-
+/* Show all six options in two clean rows. */
 .customizer .theme-options {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* Background-picker thumbnails: miniature versions of the actual photo strip.
+   Each shows the user's four photos, without individual frames or mats. */
+.theme-option .theme-swatch {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  flex: none;
+  width: 48px;
+  height: auto;
+  aspect-ratio: 1200 / 3200;
+  padding: 0;
+  border: 1px solid rgb(32 32 32 / 12%);
+  border-radius: 2px;
+  box-shadow: 0 3px 7px rgb(0 0 0 / 8%);
+}
+
+.theme-swatch .theme-mini-photos {
+  position: absolute;
+  top: 2.25%;
+  left: 4.6666667%;
+  width: 90.6666667%;
+  height: 83.5625%;
+  display: grid;
+  grid-template-rows: repeat(4, minmax(0, 1fr));
+  gap: 0.52356%;
+}
+
+.theme-swatch .theme-mini-photo {
+  display: block;
+  overflow: hidden;
+  min-height: 0;
+  background: rgb(127 127 127 / 22%);
+}
+
+.theme-swatch .theme-mini-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Easier to inspect and tap, without expanding the template controls. */
+.theme-option {
+  min-height: 164px;
+}
+
+.theme-option:focus-visible {
+  outline: 2px solid #242424;
+  outline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+  .theme-option {
+    min-height: 150px;
+    padding-inline: 3px;
+  }
+
+  .theme-option .theme-swatch {
+    width: 43px;
+  }
 }

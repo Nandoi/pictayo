@@ -1,4 +1,3 @@
-
 import './strip-layout.css'
 
 export const STRIP_WIDTH = 1200
@@ -13,17 +12,10 @@ export type StripTheme = {
   detail: string
   background: string
   ink: string
-  accent: string
-  frame: string
-  photoMat: string
   font: string
 }
 
-/**
- * Six minimal background-only strips.
- * `frame` and `photoMat` are retained for the existing theme-picker JSX;
- * neither is drawn around the photos in the exported PNG.
- */
+/** Six minimal background-only photo strip templates. */
 export const THEMES: StripTheme[] = [
   {
     id: 'white',
@@ -31,9 +23,6 @@ export const THEMES: StripTheme[] = [
     detail: 'Crisp and classic',
     background: '#FFFFFF',
     ink: '#202020',
-    accent: '#202020',
-    frame: '#DCDCDC',
-    photoMat: '#E7E7E7',
     font: 'Arial, sans-serif',
   },
   {
@@ -42,9 +31,6 @@ export const THEMES: StripTheme[] = [
     detail: 'Clean contrast',
     background: '#151515',
     ink: '#FFFFFF',
-    accent: '#FFFFFF',
-    frame: '#666666',
-    photoMat: '#474747',
     font: 'Arial, sans-serif',
   },
   {
@@ -53,9 +39,6 @@ export const THEMES: StripTheme[] = [
     detail: 'Warm off-white',
     background: '#F1EADC',
     ink: '#473F35',
-    accent: '#473F35',
-    frame: '#C8BDAE',
-    photoMat: '#D7CAB8',
     font: 'Georgia, serif',
   },
   {
@@ -64,9 +47,6 @@ export const THEMES: StripTheme[] = [
     detail: 'Cool soft gray',
     background: '#DADCDD',
     ink: '#303235',
-    accent: '#303235',
-    frame: '#ACB0B2',
-    photoMat: '#C0C3C5',
     font: 'Arial, sans-serif',
   },
   {
@@ -75,9 +55,6 @@ export const THEMES: StripTheme[] = [
     detail: 'Muted blush',
     background: '#EAD8DA',
     ink: '#513F45',
-    accent: '#513F45',
-    frame: '#CEB4BB',
-    photoMat: '#D9C2C9',
     font: 'Georgia, serif',
   },
   {
@@ -86,16 +63,13 @@ export const THEMES: StripTheme[] = [
     detail: 'Soft green',
     background: '#D7DFD3',
     ink: '#334038',
-    accent: '#334038',
-    frame: '#AABBAA',
-    photoMat: '#BECDBD',
     font: 'Arial, sans-serif',
   },
 ]
 
 /**
- * Shared export geometry in pixels, based on 1200 x 3200.
- * Matching percentages in strip-layout.css produce the live preview.
+ * One shared export geometry (in pixels, 1200 x 3200).
+ * Matching CSS percentages in strip-layout.css give the same live preview.
  */
 const LAYOUT = {
   left: 56,
@@ -145,11 +119,9 @@ function drawCover(
 function loadPhoto(source: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image()
-
     image.onload = () => resolve(image)
     image.onerror = () =>
       reject(new Error('One of your photos could not be loaded.'))
-
     image.src = source
   })
 }
@@ -178,13 +150,7 @@ function drawCaption(
   }
 
   ctx.font = `bold ${fontSize}px ${theme.font}`
-
-  ctx.fillText(
-    caption,
-    STRIP_WIDTH / 2,
-    LAYOUT.captionY,
-    maxWidth,
-  )
+  ctx.fillText(caption, STRIP_WIDTH / 2, LAYOUT.captionY, maxWidth)
 }
 
 export async function renderStrip(
@@ -194,39 +160,26 @@ export async function renderStrip(
   showDate: boolean,
   createdAt: Date,
 ): Promise<Blob> {
-  if (
-    photos.length !== PHOTO_COUNT ||
-    photos.some((photo) => !photo)
-  ) {
+  if (photos.length !== PHOTO_COUNT || photos.some((photo) => !photo)) {
     throw new Error('Take all four photos before downloading.')
   }
 
-  const images = await Promise.all(
-    photos.map((source) => loadPhoto(source!))
-  )
-
+  const images = await Promise.all(photos.map((source) => loadPhoto(source!)))
   const canvas = document.createElement('canvas')
   canvas.width = STRIP_WIDTH
   canvas.height = STRIP_HEIGHT
 
   const ctx = canvas.getContext('2d')
-
   if (!ctx) {
-    throw new Error(
-      'Canvas export is not available in this browser.'
-    )
+    throw new Error('Canvas export is not available in this browser.')
   }
 
-  // Only the background is colored.
-  // Photos have no individual mats or borders.
+  // Only the strip background is colored. Photos have no mat or border.
   ctx.fillStyle = theme.background
   ctx.fillRect(0, 0, STRIP_WIDTH, STRIP_HEIGHT)
 
   for (let index = 0; index < PHOTO_COUNT; index++) {
-    const y =
-      LAYOUT.top +
-      index * (LAYOUT.photoHeight + LAYOUT.gap)
-
+    const y = LAYOUT.top + index * (LAYOUT.photoHeight + LAYOUT.gap)
     drawCover(
       ctx,
       images[index],
@@ -237,21 +190,15 @@ export async function renderStrip(
     )
   }
 
-  // Leave the bottom blank unless caption/date is enabled.
+  // The footer is intentionally spacious and blank by default.
   ctx.fillStyle = theme.ink
   ctx.textAlign = 'center'
 
-  if (caption.trim()) {
-    drawCaption(ctx, caption.trim(), theme)
-  }
+  if (caption.trim()) drawCaption(ctx, caption.trim(), theme)
 
   if (showDate) {
     ctx.font = '30px Arial, sans-serif'
-    ctx.fillText(
-      dateLabel(createdAt).toUpperCase(),
-      STRIP_WIDTH / 2,
-      LAYOUT.dateY,
-    )
+    ctx.fillText(dateLabel(createdAt).toUpperCase(), STRIP_WIDTH / 2, LAYOUT.dateY)
   }
 
   return canvasBlob(canvas)
@@ -264,24 +211,13 @@ export async function downloadStrip(
   showDate: boolean,
   createdAt: Date,
 ): Promise<void> {
-  const blob = await renderStrip(
-    photos,
-    theme,
-    caption,
-    showDate,
-    createdAt,
-  )
-
+  const blob = await renderStrip(photos, theme, caption, showDate, createdAt)
   const url = URL.createObjectURL(blob)
   const anchor = document.createElement('a')
-
   anchor.href = url
-  anchor.download =
-    `pictayo-${new Date().toISOString().slice(0, 10)}.png`
-
+  anchor.download = `pictayo-${new Date().toISOString().slice(0, 10)}.png`
   document.body.appendChild(anchor)
   anchor.click()
   anchor.remove()
-
   window.setTimeout(() => URL.revokeObjectURL(url), 30_000)
 }

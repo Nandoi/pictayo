@@ -321,13 +321,11 @@ function StripPreview({
       style={{ backgroundColor: theme.background, color: theme.ink }}
       aria-label="Photo strip preview"
     >
-      <div className="strip-header" />
       <div className="strip-frames">
         {Array.from({ length: PHOTO_COUNT }, (_, index) => (
           <div
             key={index}
             className="strip-frame"
-            style={{ backgroundColor: theme.frame, borderColor: theme.photoMat }}
           >
             {photos[index] ? (
               <img src={photos[index]} alt={`Strip photo ${index + 1}`} />
@@ -338,7 +336,6 @@ function StripPreview({
         ))}
       </div>
       <div className="strip-footer">
-        <span className="strip-accent" style={{ backgroundColor: theme.accent }} />
         {caption.trim() && (
           <strong
             style={{
@@ -485,17 +482,20 @@ export function Photobooth() {
                       }`}
                       onClick={() => setThemeId(option.id)}
                       aria-pressed={themeId === option.id}
+                      title={option.detail}
                     >
                       <span
                         className="theme-swatch"
-                        style={{
-                          backgroundColor: option.background,
-                          borderColor: option.photoMat,
-                        }}
+                        style={{ backgroundColor: option.background }}
+                        aria-hidden="true"
                       >
-                        <span style={{ backgroundColor: option.frame }} />
-                        <span style={{ backgroundColor: option.frame }} />
-                        <span style={{ backgroundColor: option.frame }} />
+                        <span className="theme-mini-photos">
+                          {photos.map((photo, index) => (
+                            <span className="theme-mini-photo" key={index}>
+                              {photo && <img src={photo} alt="" />}
+                            </span>
+                          ))}
+                        </span>
                       </span>
                       <span className="theme-name">{option.name}</span>
                     </button>
