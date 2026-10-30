@@ -27,27 +27,16 @@
   object-fit: cover;
 }
 
-/* The footer begins immediately after the fourth photo. */
-.strip .strip-footer {
-  top: 85.8125%;
-  left: 4.6666667%;
-  right: 4.6666667%;
-  bottom: 0;
-  width: auto;
-}
-
-.strip .strip-footer strong {
-  top: 28%;
-  left: 0;
+/* Transparent full-size canvas: the same footer painting as PNG export.
+   It overlays only the optional text; photos remain responsive HTML images. */
+.strip .strip-text-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: block;
   width: 100%;
-  line-height: 1;
-}
-
-.strip .strip-date {
-  top: 65%;
-  left: 0;
-  width: 100%;
-  font-size: 6px;
+  height: 100%;
+  pointer-events: none;
 }
 
 /* Show all six options in two clean rows. */

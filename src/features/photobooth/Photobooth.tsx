@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { CameraPreview } from '../camera/CameraPreview'
 import { capturePhoto } from '../camera/camera'
 import { useCamera } from '../camera/useCamera'
-import { dateLabel, downloadStrip, PHOTO_COUNT, THEMES } from './strip'
+import { drawStripFooter, downloadStrip, PHOTO_COUNT, STRIP_HEIGHT, STRIP_WIDTH, THEMES } from './strip'
 import type { PhotoSlots, StripTheme } from './strip'
 import './capture-feedback.css'
 
@@ -315,6 +315,19 @@ function StripPreview({
   showDate,
   createdAt,
 }: StripPreviewProps) {
+  const footerCanvasRef = useRef<HTMLCanvasElement>(null)
+
+  // The preview's text is painted with exactly the same coordinates and
+  // font-measuring logic as the downloaded PNG; only the canvas is scaled.
+  useEffect(() => {
+    const canvas = footerCanvasRef.current
+    const ctx = canvas?.getContext('2d')
+    if (!ctx) return
+
+    ctx.clearRect(0, 0, STRIP_WIDTH, STRIP_HEIGHT)
+    drawStripFooter(ctx, theme, caption, showDate, createdAt)
+  }, [theme, caption, showDate, createdAt])
+
   return (
     <div
       className="strip"
@@ -323,10 +336,7 @@ function StripPreview({
     >
       <div className="strip-frames">
         {Array.from({ length: PHOTO_COUNT }, (_, index) => (
-          <div
-            key={index}
-            className="strip-frame"
-          >
+          <div key={index} className="strip-frame">
             {photos[index] ? (
               <img src={photos[index]} alt={`Strip photo ${index + 1}`} />
             ) : (
@@ -335,21 +345,13 @@ function StripPreview({
           </div>
         ))}
       </div>
-      <div className="strip-footer">
-        {caption.trim() && (
-          <strong
-            style={{
-              fontFamily: theme.font,
-              fontSize: caption.length > 30 ? 8 : caption.length > 23 ? 10 : 13,
-            }}
-          >
-            {caption.trim()}
-          </strong>
-        )}
-        {showDate && (
-          <span className="strip-date">{dateLabel(createdAt).toUpperCase()}</span>
-        )}
-      </div>
+      <canvas
+        ref={footerCanvasRef}
+        className="strip-text-layer"
+        width={STRIP_WIDTH}
+        height={STRIP_HEIGHT}
+        aria-hidden="true"
+      />
     </div>
   )
 }

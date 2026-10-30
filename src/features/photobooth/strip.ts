@@ -153,6 +153,39 @@ function drawCaption(
   ctx.fillText(caption, STRIP_WIDTH / 2, LAYOUT.captionY, maxWidth)
 }
 
+/**
+ * Paint optional footer content at the original 1200 x 3200 coordinates.
+ * Both the PNG export and the transparent preview overlay use this function,
+ * so long captions, fonts and date baselines cannot drift apart.
+ */
+export function drawStripFooter(
+  ctx: CanvasRenderingContext2D,
+  theme: StripTheme,
+  caption: string,
+  showDate: boolean,
+  createdAt: Date,
+): void {
+  ctx.save()
+  ctx.fillStyle = theme.ink
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'alphabetic'
+
+  if (caption.trim()) {
+    drawCaption(ctx, caption.trim(), theme)
+  }
+
+  if (showDate) {
+    ctx.font = '30px Arial, sans-serif'
+    ctx.fillText(
+      dateLabel(createdAt).toUpperCase(),
+      STRIP_WIDTH / 2,
+      LAYOUT.dateY,
+    )
+  }
+
+  ctx.restore()
+}
+
 export async function renderStrip(
   photos: PhotoSlots,
   theme: StripTheme,
@@ -190,16 +223,8 @@ export async function renderStrip(
     )
   }
 
-  // The footer is intentionally spacious and blank by default.
-  ctx.fillStyle = theme.ink
-  ctx.textAlign = 'center'
-
-  if (caption.trim()) drawCaption(ctx, caption.trim(), theme)
-
-  if (showDate) {
-    ctx.font = '30px Arial, sans-serif'
-    ctx.fillText(dateLabel(createdAt).toUpperCase(), STRIP_WIDTH / 2, LAYOUT.dateY)
-  }
+  // The same painter is used for the exported PNG and its live preview.
+  drawStripFooter(ctx, theme, caption, showDate, createdAt)
 
   return canvasBlob(canvas)
 }
