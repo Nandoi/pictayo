@@ -1,49 +1,66 @@
 # PicTayo 📸
 
-PicTayo is a web-based photobooth for capturing memories together. It is also a hands-on software engineering learning project focused on React, TypeScript, browser APIs, Git, and maintainable architecture.
+An at-home photobooth for capturing four little moments and turning them into one printable keepsake. **Version 1 runs entirely inside the browser**: no accounts, backend, database, or photo uploads.
 
-## Roadmap
+## Version 1 — What works
 
-**Phase 1 — Single device (MVP)**: Use one laptop camera to preview and capture four photos, retake individual shots, choose a custom fixed-size photo-strip template, and download a finished PNG.
+- Live mirrored camera preview and clear permission/device errors, with retry.
+- One-click **4-photo session** with a three-second countdown for every shot.
+- Review all four photos and retake any individual frame.
+- Three fixed-size strip styles: **Peachy**, **Paper**, and **After Dark**.
+- Editable strip caption (up to 38 characters) and optional date.
+- Live photo-strip preview and a **1200 × 3200 PNG** download.
+- Responsive layout for laptop and mobile browsers.
+- Camera tracks stop when you leave the camera stage or close the page.
 
-**Phase 2 — Dual device (future)**: Two people join a session from separate devices, capture four photos each, and assemble an eight-photo layout with four rows and two columns.
+## Run locally
 
-## Tech stack
-
-- React 19 + TypeScript 6
-- Vite 8
-- Tailwind CSS 4
-- Browser `navigator.mediaDevices.getUserMedia()` for camera input
-- HTML Canvas API for photo composition and PNG export
-- No backend or database for the single-device MVP
-
-## Local development
-
-Requirements: compatible Node.js and npm versions.
+Requires Node.js supported by Vite 8 and npm.
 
 ```bash
 npm ci
 npm run dev
 ```
 
-Open the localhost URL printed by Vite (normally http://localhost:5173).
-
-### Checks
+Open the address Vite prints (usually `http://localhost:5173`). Camera access requires a secure context: **localhost or HTTPS**. Choose **Allow** when your browser asks to use the camera.
 
 ```bash
 npm run lint
 npm run build
 ```
 
-## Project documentation
+## How to use
 
-- [Tracker](./TRACKER.md) — work completed, in progress, and upcoming
-- [Architecture](./docs/ARCHITECTURE.md) — responsibilities and design decisions
-- [Git workflow](./docs/GIT_WORKFLOW.md) — branching, review, and commits
-- [Learning log](./docs/LEARNING_LOG.md) — concepts and lessons practiced
+1. **Start taking photos** to capture four frames automatically (3-second countdown each).
+2. Tap any captured frame to retake it, then choose **Design my strip**.
+3. Choose a style, edit the caption, and choose whether to show the date.
+4. Click **Download photo strip** to save a full-resolution PNG.
+5. Use **Start a new session** to take a fresh set of photos.
 
-## Development approach
+For best results, use an up-to-date Chrome, Edge, Safari, or Firefox browser with a working camera. On a mobile device, the site must be hosted on HTTPS (not an unsecured LAN IP).
 
-Changes are made in focused branches and merged to `main` through reviewed pull requests. We prefer understandable code over premature abstractions. Browser photos stay local for Phase 1 unless the user explicitly downloads them.
+## Code layout
 
-> Privacy: Never commit private photographs, camera captures, secrets, or personal tokens to the repository.
+```text
+src/
+  App.tsx
+  index.css
+  features/
+    camera/
+      camera.ts           # Browser camera + still capture
+      useCamera.ts        # Media stream lifetime and retry
+      CameraPreview.tsx   # Video viewport, status, countdown
+    photobooth/
+      Photobooth.tsx      # 4-shot session, retakes, customization UI
+      strip.ts            # Three templates and Canvas PNG export
+```
+
+See [TRACKER.md](./TRACKER.md), [architecture](./docs/ARCHITECTURE.md), and [Git workflow](./docs/GIT_WORKFLOW.md).
+
+## Privacy and limits
+
+Captured photos stay in the current browser tab's memory until you reset or close it. They are not uploaded or automatically persisted. Download your strip before closing or refreshing. The downloaded file is a PNG; the browser may save it to your device's Downloads folder.
+
+Version 1 is **single-device only**. A future version may support two people joining from separate devices and assembling their photos into a 2-column × 4-row layout.
+
+Please do not commit personal camera captures, `.env` files, secrets, or private photographs.

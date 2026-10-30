@@ -1,78 +1,46 @@
-# PicTayo — Architecture
+# PicTayo — Architecture (Version 1)
 
-## Design goals
-
-1. Keep the single-device MVP small and understandable.
-2. Separate UI presentation from browser camera access and session operations.
-3. Keep photo templates as data; don't hard-code each template as its own entire app.
-4. Keep export independent of the camera so the same renderer can later handle two devices.
-5. Build features in small increments, rather than creating empty layers in advance.
-
-## Phase 1 data flow
-
-```text
-Camera preview (getUserMedia)
-    → capture still photo
-    → ordered photo-session state
-    → selected photo-strip template
-    → Canvas composition
-    → PNG download
-```
-
-## Planned feature-oriented structure
+Keep Version 1 small. It is a client-only React app; no backend, database, or separate state library is required.
 
 ```text
 src/
-  App.tsx                   # App composition
+  App.tsx
+  index.css
   features/
     camera/
-      components/            # CameraPreview, CameraStatus
-      hooks/                 # useCamera: lifecycle and UI state
-      services/              # browser media access
-    photo-session/
-      components/            # Countdown, PhotoReview
-      model/                 # photo order, retakes, session types
-    templates/
-      components/            # TemplateSelector
-      model/                 # template/slot types
-      data/                  # fixed-size template definitions
-    export/
-      services/              # Canvas drawing and PNG generation
-  shared/                    # Only code shared by multiple features
+      camera.ts
+      useCamera.ts
+      CameraPreview.tsx
+    photobooth/
+      Photobooth.tsx
+      strip.ts
 ```
 
-This is a **plan**, not a requirement to create every folder now. We will add a folder when it has real code.
+## Responsibilities
 
-## Responsibility boundaries
+- **camera.ts** — requests/stops browser media streams and snapshots a mirrored frame to a JPEG data URL.
+- **useCamera.ts** — owns the media stream during the camera component's React lifecycle and exposes retry/error/loading state.
+- **CameraPreview.tsx** — renders the video feed, permissions/errors, and countdown overlay.
+- **Photobooth.tsx** — handles the four-shot session, retakes, style selection, text/date customization, and the UI.
+- **strip.ts** — defines three data-driven themes and composes four photos into a fixed 1200 × 3200 PNG using Canvas.
 
-| Part | Does | Does not do |
-| --- | --- | --- |
-| Camera service | Requests/stops browser media streams | Render UI or export photos |
-| Camera hook | Coordinates stream, status, and cleanup in React | Define templates or download files |
-| Camera component | Displays video and useful error messages | Own unrelated photo session logic |
-| Photo session | Orders captured photos and retakes | Request browser permissions |
-| Template model | Defines dimensions, slots, and optional overlays | Access live camera streams |
-| Export service | Composes existing photos in Canvas | Decide when the user takes a photo |
+## Single-device flow
 
-## Initial design decisions
+```text
+Browser camera → 4 countdown shots → review / retake → choose theme
+→ edit caption/date → preview → Canvas export → local PNG download
+```
 
-**ADR-001 — No backend in Phase 1.** Photos only need to be kept for the browser session and downloaded. Avoid remote storage until a feature requires it.
+Photo data is held only in React state as data URLs. No network or storage requests are made for photo capture or export.
 
-**ADR-002 — Feature folders.** Keep related UI, hooks, and services together, rather than one giant `components` folder.
+## Key decisions
 
-**ADR-003 — Data-driven templates.** Each template defines fixed dimensions and photo-slot positions. Future dual-device layouts can use the same renderer.
+1. **No backend for V1.** Keep photos local and minimize moving parts.
+2. **No premature subfolders.** Each feature has files only; split when it becomes necessary.
+3. **Canvas export is separate.** UI preview uses the same four-slot layout and theme properties; the saved file uses a fixed pixel size.
+4. **Camera is released on stage change.** Switching from capture to review unmounts the camera component and stops tracks. Retakes remount it.
+5. **Future dual-device mode is out of scope.** Requires networking, consent, synchronization, and possibly a backend.
 
-**ADR-004 — Minimal dependencies.** Start with React hooks and browser APIs. Add state libraries or Canvas wrappers only for a demonstrated need.
+## Quality gates
 
-**ADR-005 — Resource lifecycle.** Stop camera tracks when done and release temporary photo URLs where appropriate.
-
-## Quality criteria
-
-- ESLint and production build pass for every PR.
-- Camera error states are handled, not swallowed.
-- Features have clear ownership; related logic isn't duplicated.
-- Document important tradeoffs and future changes.
-
-## Deferred until dual-device mode
-
-A signaling service, room joining, networking, synchronization, and server-side persistence are **not** required for the single-device MVP.
+Lint, production build, camera permission denied/retry, four captures, individual retake, all themes, caption/date, PNG size, camera cleanup, and responsive layout must be checked before merging the V1 PR.

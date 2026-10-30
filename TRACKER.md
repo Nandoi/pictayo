@@ -1,75 +1,63 @@
 # PicTayo — Project Tracker
 
 **Updated:** 2026-10-30  
-**Current milestone:** M0 documentation; M1 camera preview next  
+**Current milestone:** V1 single-device photobooth — implementation and PR pending  
 **Workflow:** Backlog → In progress → In review → Done
 
-A task counts as **Done** when it is merged into `main` and its acceptance criteria are satisfied. Planning decisions may be marked done when documented.
+A task is Done once the implementation has passed checks, been reviewed, and merged into `main`.
 
 ## Milestones
 
 | Milestone | Status | Outcome |
 | --- | --- | --- |
-| M0 — Project foundation | In progress | Vite, TypeScript, ESLint, Tailwind; documentation to finish |
-| M1 — Camera preview | Backlog | Browser permission, live preview, errors, track cleanup |
-| M2 — Photo capture | Backlog | Countdown, four shots, individual retakes |
-| M3 — Templates | Backlog | Fixed-size customizable photo-strip layouts |
-| M4 — Export | Backlog | Composited photo strip downloaded as PNG |
-| M5 — Quality and polish | Backlog | Tests, usability, responsive design |
-| Future — Dual-device mode | Later | Connection, synchronized capture, paired 2×4 grid |
+| M0 — Project foundation | Done | React, TypeScript, Vite, Tailwind and docs |
+| M1 — Camera preview | Done | Live video, permission/error handling, cleanup |
+| V1 — Complete single-device photobooth | In progress | 4 shots, countdown, retake, templates, PNG export |
+| M5 — Quality & polish | Backlog | Automated tests, accessibility, extra templates |
+| Future — Dual-device mode | Later | 2 devices, connected sessions, 2×4 photo layout |
 
 ## Completed
 
 - [x] Define single-device MVP and future dual-device requirements.
-- [x] Scaffold React + TypeScript with Vite; resolve initial TypeScript/ESLint conflict.
-- [x] Initialize Git repository, make initial commit, and push to GitHub.
-- [x] Configure Tailwind and remove unused Vite starter UI.
-- [x] Review and merge [PR #1](https://github.com/Nandoi/pictayo/pull/1) into `main` (merge commit `385896b`).
+- [x] Scaffold React + TypeScript using Vite.
+- [x] Initialize and connect GitHub repository.
+- [x] Integrate Tailwind and clean starter UI — [PR #1](https://github.com/Nandoi/pictayo/pull/1).
+- [x] Add architecture, tracker, and Git workflow — [PR #2](https://github.com/Nandoi/pictayo/pull/2).
+- [x] Implement live camera preview — [PR #3](https://github.com/Nandoi/pictayo/pull/3).
 
-## Now — M0 documentation
+## V1 — One release PR
 
-- [ ] Create `docs/project-documentation` branch from updated `main`.
-- [ ] Replace the placeholder README with a project-specific introduction.
-- [ ] Add `TRACKER.md`, `docs/ARCHITECTURE.md`, `docs/GIT_WORKFLOW.md`, and `docs/LEARNING_LOG.md`.
-- [ ] Check the Markdown links and readability.
-- [ ] Run `npm run lint` and `npm run build` (no regressions).
-- [ ] Commit, push, open a PR, review, and merge into `main`.
+- [ ] Automatic four-photo capture, each with a three-second countdown.
+- [ ] Retake an individual frame from capture or review.
+- [ ] Select from three fixed-size strip styles.
+- [ ] Customize caption and toggle date.
+- [ ] Export a complete 1200 × 3200 PNG photo strip.
+- [ ] Verify permission denied, missing camera, retry, and camera shutdown.
+- [ ] Manually test laptop and narrow mobile layout.
+- [ ] Run `npm run lint` and `npm run build`.
+- [ ] Open, review, and merge the single V1 PR.
 
-## Next — M1 camera preview
+## Acceptance checklist for the V1 PR
 
-- [ ] Create `feature/camera-preview` from updated `main`.
-- [ ] Add a small camera service (browser MediaDevices access).
-- [ ] Add `useCamera` hook for camera state and cleanup.
-- [ ] Show live camera preview in a component.
-- [ ] Display permission-denied and device-not-found states.
-- [ ] Stop all media tracks on cleanup.
-- [ ] Test on `localhost` and ensure lint/build pass.
-- [ ] Review and merge PR; update tracker and learning log.
+- [ ] No blank/black photos after countdown (test camera readiness).
+- [ ] Four shots appear in the correct order.
+- [ ] Retaking frame 2 changes only frame 2.
+- [ ] Changing themes and caption updates both preview and download.
+- [ ] PNG opens at exactly 1200 × 3200 pixels.
+- [ ] Camera indicator stops on leaving the capture stage or closing the tab.
+- [ ] Lint/build pass, no console errors.
 
 ## Future work
 
-**M2 — Capture:** Four snapshots, countdown, ordered photos, individual retake, resource cleanup.
-
-**M3 — Templates:** Typed dimensions and slots, a default four-photo strip, additional custom overlays, template chooser.
-
-**M4 — Export:** Canvas rendering, photo cropping/fitting, output PNG download, pixel-size verification.
-
-**M5 — Quality:** Unit tests for photo/session/template logic, camera failure-state manual tests, accessibility, mobile layout.
-
-**Phase 2:** Two-participant rooms, coordination/signaling, synchronization and reconnection, 2-column × 4-row export.
+- Add real user-designed template assets and more layout options.
+- Unit and browser tests, performance, accessibility, share flow.
+- Dual-device sessions (signaling, synchronization, paired strip export).
 
 ## Session log
 
 | Date | Work | Outcome |
 | --- | --- | --- |
-| 2026-10-30 | Scoped PicTayo and selected technology | MVP and future dual-device goal defined |
-| 2026-10-30 | Initialized local app and Git | Initial `main` commit pushed |
-| 2026-10-30 | Reviewed and merged PR #1 | Tailwind setup and starter cleanup merged |
-| 2026-10-30 | Began documentation milestone | Files prepared; PR pending |
-
-## After every PR
-
-1. Record the PR number, branch, checks, and merge outcome.
-2. Mark completed tasks; leave unmerged work as in progress.
-3. Add a short note in `docs/LEARNING_LOG.md`.
-4. Choose the next smallest meaningful feature.
+| 2026-10-30 | Planned PicTayo and initialized Git | React/Vite application created |
+| 2026-10-30 | Merged PRs #1 and #2 | Tailwind, cleanup, documentation |
+| 2026-10-30 | Merged PR #3 | Camera preview on `main` |
+| 2026-10-30 | Started all-in-one V1 | Photo session, themes, PNG export prepared for one PR |
