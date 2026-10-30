@@ -1,7 +1,8 @@
+
 import { useEffect, useRef, useState } from 'react'
 import { startCamera, stopCamera } from './camera'
 
-/** Owns the camera stream from mount to unmount (including React Strict Mode). */
+/** Owns the webcam stream and releases it on retry or unmount. */
 export function useCamera() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [error, setError] = useState<string | null>(null)
@@ -13,35 +14,72 @@ export function useCamera() {
     let stream: MediaStream | null = null
     const video = videoRef.current
 
+    function releaseStream() {
+      if (stream) {
+        for (const track of stream.getVideoTracks()) {
+          track.removeEventListener('ended', handleTrackEnded)
+        }
+
+        stopCamera(stream)
+        stream = null
+      }
+
+      if (video) video.srcObject = null
+    }
+
+    function handleTrackEnded() {
+      if (cancelled) return
+
+      releaseStream()
+      setError('The camera disconnected. Check your webcam and try again.')
+      setLoading(false)
+    }
+
     async function initialize() {
       try {
         const nextStream = await startCamera()
+
         if (cancelled) {
           stopCamera(nextStream)
           return
         }
+
         stream = nextStream
-        if (video) {
-          video.srcObject = nextStream
-          try {
-            await video.play()
-          } catch {
-            // Some browsers defer playback until they consider the element visible.
-          }
+
+        for (const track of stream.getVideoTracks()) {
+          track.addEventListener('ended', handleTrackEnded)
         }
+
+        if (!video) {
+          throw new Error('Camera preview is unavailable. Please retry.')
+        }
+
+        video.srcObject = stream
+
+        try {
+          await video.play()
+        } catch (cause) {
+          throw new Error(
+            'The camera preview could not start. Press Retry to try again.',
+            { cause },
+          )
+        }
+
         if (!cancelled) setLoading(false)
       } catch (cause) {
         if (cancelled) return
+
+        releaseStream()
         setError(cause instanceof Error ? cause.message : 'Camera unavailable.')
         setLoading(false)
       }
     }
 
     void initialize()
+
     return () => {
       cancelled = true
-      if (video) video.srcObject = null
-      if (stream) stopCamera(stream)
+      releaseStream()
     }
   }, [attempt])
 
