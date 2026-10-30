@@ -18,6 +18,7 @@ type CameraSessionProps = {
   retakeSlot: number | null
   onPhoto: (index: number, dataUrl: string) => void
   onDesign: () => void
+  onCancelRetake: () => void
   onReset: () => void
 }
 
@@ -26,6 +27,7 @@ function CameraSession({
   retakeSlot,
   onPhoto,
   onDesign,
+  onCancelRetake,
   onReset,
 }: CameraSessionProps) {
   const { videoRef, error, loading, retry } = useCamera()
@@ -35,6 +37,7 @@ function CameraSession({
     useState<number | 'flash' | null>(null)
   const [currentShot, setCurrentShot] = useState<number | null>(null)
   const [captureError, setCaptureError] = useState<string | null>(null)
+  const [selectedRetake, setSelectedRetake] = useState<number | null>(null)
   const [savedPhoto, setSavedPhoto] = useState<number | null>(null)
   const [freshPhoto, setFreshPhoto] = useState<number | null>(null)
   const runId = useRef(0)
@@ -45,7 +48,9 @@ function CameraSession({
   const remaining = photos.filter((photo) => !photo).length
   const taken = PHOTO_COUNT - remaining
   const nextShot = photos.findIndex((photo) => photo === null)
-  const activePhoto = retakeSlot ?? nextShot
+  // A selection never starts the camera countdown by itself.
+  const selectedPhoto = retakeSlot ?? selectedRetake
+  const activePhoto = selectedPhoto ?? nextShot
 
   useEffect(() => () => {
     runId.current += 1
@@ -65,7 +70,26 @@ function CameraSession({
 
   function handleReset() {
     clearFeedback()
+    setSelectedRetake(null)
     onReset()
+  }
+
+  function selectRetake(index: number) {
+    if (capturing.current || busy || retakeSlot !== null || !photos[index]) return
+    clearFeedback()
+    setCaptureError(null)
+    setSelectedRetake((previous) => previous === index ? null : index)
+  }
+
+  function cancelRetake() {
+    if (capturing.current || busy) return
+    clearFeedback()
+    setCaptureError(null)
+    if (retakeSlot !== null) {
+      onCancelRetake() // Return to the review screen with the original photo.
+    } else {
+      setSelectedRetake(null)
+    }
   }
 
   async function takeShot(index: number, finishAfter = false) {
@@ -96,6 +120,7 @@ function CameraSession({
       await sleep(FLASH_DURATION)
       if (runId.current !== id) return
       setCountdown(null)
+      setSelectedRetake(null)
 
       // Feedback disappears automatically, but the next shot never starts on its own.
       if (finishAfter) {
@@ -127,6 +152,8 @@ function CameraSession({
   function handleCapture() {
     if (retakeSlot !== null) {
       void takeShot(retakeSlot, true)
+    } else if (selectedRetake !== null) {
+      void takeShot(selectedRetake)
     } else if (nextShot !== -1) {
       void takeShot(nextShot)
     }
@@ -159,11 +186,11 @@ function CameraSession({
           <div className="booth-progress" aria-live="polite">
             {taken} of {PHOTO_COUNT} taken
           </div>
-          <p className="booth-help">
-            {retakeSlot !== null
-              ? `Ready to retake photo ${retakeSlot + 1}.`
+          <p className="booth-help" aria-live="polite">
+            {selectedPhoto !== null
+              ? `Photo ${selectedPhoto + 1} selected. Press Retake when you're ready.`
               : completed
-                ? 'All photos taken. Retake a photo or continue.'
+                ? 'All photos taken. Choose a photo to retake, or continue.'
                 : 'Take your time. The next photo starts only when you click.'}
           </p>
         </div>
@@ -175,19 +202,30 @@ function CameraSession({
             onClick={handleCapture}
             disabled={
               busy || loading || !ready || Boolean(error) ||
-              (completed && retakeSlot === null)
+              (completed && selectedPhoto === null)
             }
           >
             {busy
               ? `Capturing photo ${(currentShot ?? 0) + 1}...`
-              : retakeSlot !== null
-                ? `Retake photo ${retakeSlot + 1}`
+              : selectedPhoto !== null
+                ? `Retake photo ${selectedPhoto + 1}`
                 : completed
                   ? 'All photos taken'
                   : `Take photo ${activePhoto + 1}`}
           </button>
 
-          {completed && retakeSlot === null && (
+          {selectedPhoto !== null && (
+            <button
+              type="button"
+              className="button button-outline booth-cancel-retake"
+              onClick={cancelRetake}
+              disabled={busy}
+            >
+              Cancel retake
+            </button>
+          )}
+
+          {completed && selectedPhoto === null && (
             <button
               type="button"
               className="button button-dark booth-next-button"
@@ -222,15 +260,23 @@ function CameraSession({
               className={`shot-thumb ${
                 photos[index] ? 'shot-thumb-filled' : ''
               } ${currentShot === index ? 'shot-thumb-active' : ''} ${
-                freshPhoto === index ? 'shot-thumb-new' : ''
-              }`}
+                selectedPhoto === index ? 'shot-thumb-selected' : ''
+              } ${freshPhoto === index ? 'shot-thumb-new' : ''}`}
               disabled={
                 !photos[index] || busy || loading || Boolean(error) ||
                 !ready || retakeSlot !== null
               }
-              onClick={() => void takeShot(index)}
+              onClick={() => selectRetake(index)}
+              aria-pressed={photos[index] ? selectedPhoto === index : undefined}
               aria-label={photos[index]
-                ? `Retake photo ${index + 1}`
+                ? selectedPhoto === index
+                  ? `Photo ${index + 1} selected for retake`
+                  : `Select photo ${index + 1} to retake`
+                : `Photo ${index + 1} not taken`}
+              title={photos[index]
+                ? selectedPhoto === index
+                  ? `Photo ${index + 1} selected. Press Retake photo ${index + 1} to capture.`
+                  : `Select photo ${index + 1} to retake`
                 : `Photo ${index + 1} not taken`}
             >
               {photos[index] ? (
@@ -239,7 +285,12 @@ function CameraSession({
                 <span className="shot-thumb-number">0{index + 1}</span>
               )}
               {photos[index] && (
-                <span className="shot-retake-indicator" aria-hidden="true">↻</span>
+                <span className="shot-retake-indicator" aria-hidden="true">
+                  <span className="booth-retake-symbol">↻</span>
+                  <span className="booth-retake-text">
+                    {selectedPhoto === index ? 'Selected' : 'Retake'}
+                  </span>
+                </span>
               )}
             </button>
           ))}
@@ -373,6 +424,11 @@ export function Photobooth() {
     setStage('camera')
   }
 
+  function cancelReviewRetake() {
+    setRetakeSlot(null)
+    setStage('design')
+  }
+
   async function save() {
     if (!complete || saving) return
     setSaveError(null)
@@ -398,6 +454,7 @@ export function Photobooth() {
             retakeSlot={retakeSlot}
             onPhoto={savePhoto}
             onDesign={designStrip}
+            onCancelRetake={cancelReviewRetake}
             onReset={resetSession}
           />
         </div>

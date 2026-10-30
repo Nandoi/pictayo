@@ -93,3 +93,87 @@
   }
   .countdown-overlay .flash-screen { opacity: 0; }
 }
+
+/* Commit 2: deliberate, two-step retakes in the captured-photo gallery. */
+.booth-shots-row .shot-thumb {
+  transition: border-color 180ms ease, box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+/* The selected frame remains visible until its replacement is captured. */
+.booth-shots-row .shot-thumb-selected {
+  border-color: #202020;
+  box-shadow: 0 0 0 2px #202020;
+}
+
+.booth-shots-row .shot-thumb-selected:not(:disabled):hover {
+  border-color: #202020;
+}
+
+.booth-shots-row .shot-thumb:focus-visible {
+  outline: 2px solid #202020;
+  outline-offset: 3px;
+}
+
+/* Compact retake pill: label appears on hover, focus or selection. */
+.booth-shots-row .shot-retake-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: auto;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 7px;
+  border-radius: 999px;
+  font-size: 14px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.booth-retake-symbol { line-height: 1; }
+.booth-retake-text {
+  display: none;
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 650;
+}
+
+@media (hover: hover) {
+  .booth-shots-row .shot-thumb:hover .booth-retake-text {
+    display: inline;
+  }
+}
+
+.booth-shots-row .shot-thumb:focus-visible .booth-retake-text,
+.booth-shots-row .shot-thumb-selected .booth-retake-text {
+  display: inline;
+}
+
+.booth-cancel-retake { width: 100%; min-height: 40px; }
+
+/* Touch users always see an affordance; tapping selects, not captures. */
+@media (hover: none) {
+  .booth-shots-row .shot-thumb-filled:not(.shot-thumb-selected)
+    .shot-retake-indicator { opacity: 0.95; }
+}
+
+@media (max-width: 820px) {
+  .booth-cancel-retake {
+    min-height: 36px;
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  .booth-cancel-retake {
+    min-height: 30px;
+    padding: 5px 8px;
+    font-size: 11px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .booth-shots-row .shot-thumb { transition: none; }
+}
