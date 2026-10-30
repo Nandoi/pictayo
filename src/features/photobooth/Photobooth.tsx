@@ -4,9 +4,11 @@ import { capturePhoto } from '../camera/camera'
 import { useCamera } from '../camera/useCamera'
 import { dateLabel, downloadStrip, PHOTO_COUNT, THEMES } from './strip'
 import type { PhotoSlots, StripTheme } from './strip'
+import './capture-feedback.css'
 
 const COUNTDOWN_SECONDS = 3
 const FLASH_DURATION = 220
+const SAVED_FEEDBACK_DURATION = 1800
 
 const sleep = (ms: number) =>
   new Promise<void>((resolve) => window.setTimeout(resolve, ms))
@@ -33,7 +35,11 @@ function CameraSession({
     useState<number | 'flash' | null>(null)
   const [currentShot, setCurrentShot] = useState<number | null>(null)
   const [captureError, setCaptureError] = useState<string | null>(null)
+  const [savedPhoto, setSavedPhoto] = useState<number | null>(null)
+  const [freshPhoto, setFreshPhoto] = useState<number | null>(null)
   const runId = useRef(0)
+  const feedbackTimer = useRef<number | null>(null)
+  const capturing = useRef(false)
 
   const completed = photos.every(Boolean)
   const remaining = photos.filter((photo) => !photo).length
@@ -43,15 +49,34 @@ function CameraSession({
 
   useEffect(() => () => {
     runId.current += 1
+    if (feedbackTimer.current !== null) {
+      window.clearTimeout(feedbackTimer.current)
+    }
   }, [])
 
+  function clearFeedback() {
+    if (feedbackTimer.current !== null) {
+      window.clearTimeout(feedbackTimer.current)
+      feedbackTimer.current = null
+    }
+    setSavedPhoto(null)
+    setFreshPhoto(null)
+  }
+
+  function handleReset() {
+    clearFeedback()
+    onReset()
+  }
+
   async function takeShot(index: number, finishAfter = false) {
-    if (busy || loading || error || !ready || index < 0) return
+    if (capturing.current || busy || loading || error || !ready || index < 0) return
 
     const video = videoRef.current
     if (!video) return
 
     const id = ++runId.current
+    capturing.current = true
+    clearFeedback()
     setBusy(true)
     setCurrentShot(index)
     setCaptureError(null)
@@ -63,14 +88,26 @@ function CameraSession({
         if (runId.current !== id) return
       }
 
-      onPhoto(index, capturePhoto(video))
+      // Capture exactly one frame, then briefly flash the camera.
+      const image = capturePhoto(video)
+      onPhoto(index, image)
+      setFreshPhoto(index)
       setCountdown('flash')
       await sleep(FLASH_DURATION)
       if (runId.current !== id) return
       setCountdown(null)
 
-      // One click captures ONE photo. Nothing starts automatically.
-      if (finishAfter) onDesign()
+      // Feedback disappears automatically, but the next shot never starts on its own.
+      if (finishAfter) {
+        onDesign()
+      } else {
+        setSavedPhoto(index)
+        feedbackTimer.current = window.setTimeout(() => {
+          setSavedPhoto(null)
+          setFreshPhoto(null)
+          feedbackTimer.current = null
+        }, SAVED_FEEDBACK_DURATION)
+      }
     } catch (cause) {
       if (runId.current === id) {
         setCaptureError(
@@ -81,6 +118,7 @@ function CameraSession({
       if (runId.current === id) {
         setCountdown(null)
         setCurrentShot(null)
+        capturing.current = false
         setBusy(false)
       }
     }
@@ -108,6 +146,12 @@ function CameraSession({
           onReady={() => setReady(true)}
           countdown={countdown}
         />
+        {savedPhoto !== null && (
+          <div className="booth-saved-feedback" role="status" aria-live="polite">
+            <span className="booth-saved-check" aria-hidden="true">✓</span>
+            Photo {savedPhoto + 1} saved
+          </div>
+        )}
       </div>
 
       <aside className="booth-controls" aria-label="Capture controls">
@@ -161,7 +205,7 @@ function CameraSession({
           <button
             type="button"
             className="text-button booth-reset"
-            onClick={onReset}
+            onClick={handleReset}
             disabled={busy}
           >
             Start over
@@ -177,7 +221,9 @@ function CameraSession({
               type="button"
               className={`shot-thumb ${
                 photos[index] ? 'shot-thumb-filled' : ''
-              } ${currentShot === index ? 'shot-thumb-active' : ''}`}
+              } ${currentShot === index ? 'shot-thumb-active' : ''} ${
+                freshPhoto === index ? 'shot-thumb-new' : ''
+              }`}
               disabled={
                 !photos[index] || busy || loading || Boolean(error) ||
                 !ready || retakeSlot !== null
