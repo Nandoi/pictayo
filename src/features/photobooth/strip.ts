@@ -1,4 +1,6 @@
 
+import './strip-layout.css'
+
 export const STRIP_WIDTH = 1200
 export const STRIP_HEIGHT = 3200
 export const PHOTO_COUNT = 4
@@ -6,7 +8,7 @@ export const PHOTO_COUNT = 4
 export type PhotoSlots = (string | null)[]
 
 export type StripTheme = {
-  id: 'peach' | 'paper' | 'night'
+  id: 'white' | 'black' | 'oat' | 'stone' | 'rose' | 'sage'
   name: string
   detail: string
   background: string
@@ -17,41 +19,93 @@ export type StripTheme = {
   font: string
 }
 
+/**
+ * Six minimal background-only strips.
+ * `frame` and `photoMat` are retained for the existing theme-picker JSX;
+ * neither is drawn around the photos in the exported PNG.
+ */
 export const THEMES: StripTheme[] = [
   {
-    id: 'peach',
-    name: 'Peachy',
-    detail: 'Warm & sweet',
-    background: '#f8dad1',
-    ink: '#493a34',
-    accent: '#d76c5c',
-    frame: '#fffaf2',
-    photoMat: '#eab6ab',
-    font: 'Georgia, serif',
-  },
-  {
-    id: 'paper',
-    name: 'Paper',
-    detail: 'Minimal & timeless',
-    background: '#f5f0e7',
-    ink: '#2d302b',
-    accent: '#677c67',
-    frame: '#ffffff',
-    photoMat: '#d9d1c4',
+    id: 'white',
+    name: 'White',
+    detail: 'Crisp and classic',
+    background: '#FFFFFF',
+    ink: '#202020',
+    accent: '#202020',
+    frame: '#DCDCDC',
+    photoMat: '#E7E7E7',
     font: 'Arial, sans-serif',
   },
   {
-    id: 'night',
-    name: 'After Dark',
-    detail: 'A little dramatic',
-    background: '#29252c',
-    ink: '#fff2df',
-    accent: '#e99b9c',
-    frame: '#f7ebdf',
-    photoMat: '#53444f',
+    id: 'black',
+    name: 'Black',
+    detail: 'Clean contrast',
+    background: '#151515',
+    ink: '#FFFFFF',
+    accent: '#FFFFFF',
+    frame: '#666666',
+    photoMat: '#474747',
+    font: 'Arial, sans-serif',
+  },
+  {
+    id: 'oat',
+    name: 'Oat',
+    detail: 'Warm off-white',
+    background: '#F1EADC',
+    ink: '#473F35',
+    accent: '#473F35',
+    frame: '#C8BDAE',
+    photoMat: '#D7CAB8',
     font: 'Georgia, serif',
   },
+  {
+    id: 'stone',
+    name: 'Stone',
+    detail: 'Cool soft gray',
+    background: '#DADCDD',
+    ink: '#303235',
+    accent: '#303235',
+    frame: '#ACB0B2',
+    photoMat: '#C0C3C5',
+    font: 'Arial, sans-serif',
+  },
+  {
+    id: 'rose',
+    name: 'Rose',
+    detail: 'Muted blush',
+    background: '#EAD8DA',
+    ink: '#513F45',
+    accent: '#513F45',
+    frame: '#CEB4BB',
+    photoMat: '#D9C2C9',
+    font: 'Georgia, serif',
+  },
+  {
+    id: 'sage',
+    name: 'Sage',
+    detail: 'Soft green',
+    background: '#D7DFD3',
+    ink: '#334038',
+    accent: '#334038',
+    frame: '#AABBAA',
+    photoMat: '#BECDBD',
+    font: 'Arial, sans-serif',
+  },
 ]
+
+/**
+ * Shared export geometry in pixels, based on 1200 x 3200.
+ * Matching percentages in strip-layout.css produce the live preview.
+ */
+const LAYOUT = {
+  left: 56,
+  top: 72,
+  width: 1088,
+  photoHeight: 658,
+  gap: 14,
+  captionY: 2930,
+  dateY: 3080,
+} as const
 
 export function dateLabel(date: Date = new Date()): string {
   return date.toLocaleDateString('en-US', {
@@ -91,9 +145,11 @@ function drawCover(
 function loadPhoto(source: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image()
+
     image.onload = () => resolve(image)
     image.onerror = () =>
       reject(new Error('One of your photos could not be loaded.'))
+
     image.src = source
   })
 }
@@ -112,19 +168,23 @@ function drawCaption(
   caption: string,
   theme: StripTheme,
 ) {
+  const maxWidth = 1050
   let fontSize = 68
-  const maxWidth = 1020
 
   while (fontSize > 34) {
     ctx.font = `bold ${fontSize}px ${theme.font}`
-
     if (ctx.measureText(caption).width <= maxWidth) break
-
     fontSize -= 2
   }
 
   ctx.font = `bold ${fontSize}px ${theme.font}`
-  ctx.fillText(caption, STRIP_WIDTH / 2, 2910, maxWidth)
+
+  ctx.fillText(
+    caption,
+    STRIP_WIDTH / 2,
+    LAYOUT.captionY,
+    maxWidth,
+  )
 }
 
 export async function renderStrip(
@@ -146,7 +206,6 @@ export async function renderStrip(
   )
 
   const canvas = document.createElement('canvas')
-
   canvas.width = STRIP_WIDTH
   canvas.height = STRIP_HEIGHT
 
@@ -158,65 +217,40 @@ export async function renderStrip(
     )
   }
 
+  // Only the background is colored.
+  // Photos have no individual mats or borders.
   ctx.fillStyle = theme.background
   ctx.fillRect(0, 0, STRIP_WIDTH, STRIP_HEIGHT)
 
-  // Four-photo layout
-  const x = 100
-  const top = 270
-  const photoWidth = 1000
-  const photoHeight = 590
-  const gap = 30
-
   for (let index = 0; index < PHOTO_COUNT; index++) {
-    const y = top + index * (photoHeight + gap)
-
-    ctx.fillStyle = theme.photoMat
-    ctx.fillRect(
-      x - 15,
-      y - 15,
-      photoWidth + 30,
-      photoHeight + 30
-    )
-
-    ctx.fillStyle = theme.frame
-    ctx.fillRect(
-      x - 8,
-      y - 8,
-      photoWidth + 16,
-      photoHeight + 16
-    )
+    const y =
+      LAYOUT.top +
+      index * (LAYOUT.photoHeight + LAYOUT.gap)
 
     drawCover(
       ctx,
       images[index],
-      x,
+      LAYOUT.left,
       y,
-      photoWidth,
-      photoHeight
+      LAYOUT.width,
+      LAYOUT.photoHeight,
     )
   }
 
-  // Minimal footer
-  ctx.fillStyle = theme.accent
-  ctx.fillRect(474, 2823, 252, 5)
-
+  // Leave the bottom blank unless caption/date is enabled.
   ctx.fillStyle = theme.ink
   ctx.textAlign = 'center'
 
-  // Optional caption
   if (caption.trim()) {
     drawCaption(ctx, caption.trim(), theme)
   }
 
-  // Optional date
   if (showDate) {
     ctx.font = '30px Arial, sans-serif'
-
     ctx.fillText(
       dateLabel(createdAt).toUpperCase(),
       STRIP_WIDTH / 2,
-      3050
+      LAYOUT.dateY,
     )
   }
 
@@ -235,14 +269,15 @@ export async function downloadStrip(
     theme,
     caption,
     showDate,
-    createdAt
+    createdAt,
   )
 
   const url = URL.createObjectURL(blob)
   const anchor = document.createElement('a')
 
   anchor.href = url
-  anchor.download = `pictayo-${new Date().toISOString().slice(0, 10)}.png`
+  anchor.download =
+    `pictayo-${new Date().toISOString().slice(0, 10)}.png`
 
   document.body.appendChild(anchor)
   anchor.click()
