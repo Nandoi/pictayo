@@ -5,6 +5,7 @@ import { useCamera } from '../camera/useCamera'
 import { drawStripFooter, downloadStrip, PHOTO_COUNT, STRIP_HEIGHT, STRIP_WIDTH, THEMES } from './strip'
 import type { PhotoSlots, StripTheme } from './strip'
 import './capture-feedback.css'
+import './restart-confirmation.css'
 
 const COUNTDOWN_SECONDS = 3
 const FLASH_DURATION = 750
@@ -360,9 +361,10 @@ type ReviewProps = {
   photos: PhotoSlots
   onRetake: (slot: number) => void
   onReset: () => void
+  saving: boolean
 }
 
-function PhotoReview({ photos, onRetake, onReset }: ReviewProps) {
+function PhotoReview({ photos, onRetake, onReset, saving }: ReviewProps) {
   return (
     <section className="studio-card" aria-label="Photo review">
       <div className="review-grid">
@@ -370,12 +372,12 @@ function PhotoReview({ photos, onRetake, onReset }: ReviewProps) {
           <div className="review-photo" key={index}>
             {photo && <img src={photo} alt={`Photo ${index + 1}`} />}
             <span className="review-photo-index">0{index + 1}</span>
-            <button type="button" onClick={() => onRetake(index)}>Retake</button>
+            <button type="button" onClick={() => onRetake(index)} disabled={saving}>Retake</button>
           </div>
         ))}
       </div>
       <div className="review-bottom">
-        <button type="button" className="button button-outline" onClick={onReset}>
+        <button type="button" className="button button-outline" onClick={onReset} disabled={saving}>
           Start over
         </button>
       </div>
@@ -395,6 +397,20 @@ export function Photobooth() {
   const [createdAt, setCreatedAt] = useState(() => new Date())
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [restartOpen, setRestartOpen] = useState(false)
+  const restartDialogRef = useRef<HTMLDialogElement>(null)
+
+  // A native dialog handles focus trapping and Escape for us.
+  useEffect(() => {
+    const dialog = restartDialogRef.current
+    if (!dialog) return
+
+    if (restartOpen && !dialog.open) {
+      dialog.showModal()
+    } else if (!restartOpen && dialog.open) {
+      dialog.close()
+    }
+  }, [restartOpen])
 
   const theme = THEMES.find((item) => item.id === themeId) ?? THEMES[0]
   const complete = photos.length === PHOTO_COUNT && photos.every(Boolean)
@@ -410,7 +426,25 @@ export function Photobooth() {
     setRetakeSlot(null)
     setStage('camera')
     setCreatedAt(new Date())
+    setThemeId(THEMES[0].id)
+    setCaption('')
+    setShowDate(false)
     setSaveError(null)
+  }
+
+  function requestReset() {
+    // A fresh, empty booth can restart immediately.
+    if (saving) return
+    if (photos.some(Boolean)) {
+      setRestartOpen(true)
+    } else {
+      resetSession()
+    }
+  }
+
+  function confirmReset() {
+    setRestartOpen(false)
+    resetSession()
   }
 
   function designStrip() {
@@ -454,13 +488,13 @@ export function Photobooth() {
             onPhoto={savePhoto}
             onDesign={designStrip}
             onCancelRetake={cancelReviewRetake}
-            onReset={resetSession}
+            onReset={requestReset}
           />
         </div>
       ) : (
         <div className="mx-auto w-full max-w-6xl px-4 py-6 md:py-10">
           <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-            <PhotoReview photos={photos} onRetake={retake} onReset={resetSession} />
+            <PhotoReview photos={photos} onRetake={retake} onReset={requestReset} saving={saving} />
 
             <aside className="preview-card" aria-label="Photo strip customization">
               <div className="preview-stage">
@@ -539,6 +573,41 @@ export function Photobooth() {
           </div>
         </div>
       )}
+
+      <dialog
+        ref={restartDialogRef}
+        className="restart-confirmation"
+        role="alertdialog"
+        aria-labelledby="restart-confirmation-title"
+        aria-describedby="restart-confirmation-description"
+        onCancel={() => setRestartOpen(false)}
+        onClose={() => setRestartOpen(false)}
+      >
+        <div className="restart-confirmation-content">
+          <h2 id="restart-confirmation-title">Start over?</h2>
+          <p id="restart-confirmation-description">
+            This will erase your captured photos and reset your strip settings.
+            You won't be able to recover the photos afterward.
+          </p>
+          <div className="restart-confirmation-actions">
+            <button
+              type="button"
+              className="button button-outline restart-confirmation-cancel"
+              autoFocus
+              onClick={() => setRestartOpen(false)}
+            >
+              Keep my photos
+            </button>
+            <button
+              type="button"
+              className="button restart-confirmation-delete"
+              onClick={confirmReset}
+            >
+              Delete &amp; start over
+            </button>
+          </div>
+        </div>
+      </dialog>
     </main>
   )
 }
