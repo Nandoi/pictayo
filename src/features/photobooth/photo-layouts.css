@@ -1,48 +1,126 @@
 
-/* Compact layout selector in the camera controls. */
-.booth-layout-label {
-  margin-bottom: 6px;
-  color: #686868;
-  font-size: 11px;
-  font-weight: 650;
+/* Dedicated layout selection screen */
+.layout-picker-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: 32px 16px;
 }
 
-.booth-layout-options {
+.layout-picker-header {
+  margin-bottom: 27px;
+  text-align: center;
+}
+
+.layout-picker-eyebrow {
+  display: block;
+  margin-bottom: 10px;
+  color: #9a7485;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.layout-picker-header h1 {
+  margin: 0;
+  color: #272226;
+  font-size: clamp(25px, 4vw, 36px);
+  font-weight: 750;
+  letter-spacing: -.045em;
+}
+
+.layout-picker-header p {
+  margin: 10px auto 0;
+  max-width: 36ch;
+  color: #777077;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.layout-picker-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 5px;
-  margin-bottom: 14px;
+  gap: clamp(8px, 1.8vw, 16px);
+  width: min(100%, 740px);
 }
 
-.booth-layout-choice {
+.layout-picker-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   min-width: 0;
-  min-height: 34px;
-  padding: 6px 4px;
-  border: 1px solid #e2e0e0;
-  border-radius: 10px;
+  min-height: 232px;
+  padding: 18px 12px 16px;
+  border: 1.5px solid #e6e1e8;
+  border-radius: 19px;
   background: #fff;
-  color: #555;
-  font-size: 11px;
-  font-weight: 600;
+  color: #372f34;
+  box-shadow: 0 8px 20px rgb(40 30 35 / 3%);
+  text-align: center;
+  transition: border-color .18s ease, background .18s ease,
+    transform .18s ease, box-shadow .18s ease;
 }
 
-.booth-layout-choice-active {
-  border-color: #756c71;
-  background: #f8f0f3;
-  color: #342d31;
+.layout-picker-card:not(:disabled):hover {
+  border-color: #c7819b;
+  background: #fff8fa;
+  box-shadow: 0 12px 24px rgb(96 44 66 / 8%);
+  transform: translateY(-3px);
 }
 
-.booth-layout-choice:disabled:not(.booth-layout-choice-active) {
-  opacity: .48;
-  cursor: not-allowed;
+.layout-picker-card:focus-visible {
+  outline: 2px solid #b54c76;
+  outline-offset: 3px;
 }
 
-.booth-layout-choice:focus-visible {
-  outline: 2px solid #242424;
-  outline-offset: 2px;
+.layout-picker-illustration {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 153px;
+  margin-bottom: 7px;
 }
 
-/* Use the exact slot coordinates from the PNG renderer. */
+/* Miniature output with the real layout proportions */
+.layout-picker-paper {
+  position: relative;
+  display: block;
+  max-width: 100%;
+  flex: none;
+  overflow: hidden;
+  background: #f8eee3;
+  box-shadow: 0 2px 7px rgb(58 42 35 / 9%);
+}
+
+.layout-picker-photo {
+  display: block;
+  background: #e3d1c0;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 45%);
+}
+
+.layout-picker-card-title {
+  margin-top: auto;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.layout-picker-card-subtitle {
+  margin-top: 4px;
+  color: #866d7d;
+  font-size: 12px;
+}
+
+.layout-picker-note {
+  margin: 23px 0 0;
+  color: #888087;
+  font-size: 12px;
+  text-align: center;
+}
+
+/* Shared photo positions for strip preview and thumbnails */
 .layout-strip-slots,
 .layout-mini-slots {
   position: absolute;
@@ -75,62 +153,38 @@
   max-width: 240px;
 }
 
-@media (max-width: 820px) and (orientation: portrait) {
-  .booth-layout-options {
-    margin-bottom: 7px;
+@media (max-width: 550px) {
+  .layout-picker-page {
+    justify-content: flex-start;
+    padding: 42px 12px 24px;
   }
 
-  .booth-layout-choice {
-    min-height: 30px;
-    padding: 4px;
+  .layout-picker-header {
+    margin-bottom: 20px;
+  }
+
+  .layout-picker-card {
+    min-height: 202px;
+    padding: 10px 5px 12px;
+    border-radius: 15px;
+  }
+
+  .layout-picker-illustration {
+    height: 129px;
+    margin-bottom: 5px;
+  }
+
+  .layout-picker-card-title {
+    font-size: 13px;
+  }
+
+  .layout-picker-card-subtitle {
+    font-size: 11px;
   }
 }
 
-@media (max-height: 520px) and (orientation: landscape) {
-  .booth-layout-label {
-    display: none;
+@media (prefers-reduced-motion: reduce) {
+  .layout-picker-card {
+    transition: none;
   }
-
-  .booth-layout-options {
-    margin-bottom: 6px;
-  }
-
-  .booth-layout-choice {
-    min-height: 27px;
-    padding: 3px;
-  }
-}
-
-/* Switch between layouts that need the same number of photos. */
-.design-layout-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 0 0 18px;
-}
-
-.design-layout-choice {
-  min-height: 35px;
-  padding: 7px 15px;
-  border: 1px solid #dedbdd;
-  border-radius: 999px;
-  background: #fff;
-  color: #555;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.design-layout-choice-active {
-  background: #f8f0f3;
-  border-color: #756c71;
-  color: #342d31;
-}
-
-.design-layout-choice:disabled {
-  opacity: .5;
-}
-
-.design-layout-choice:focus-visible {
-  outline: 2px solid #242424;
-  outline-offset: 2px;
 }
