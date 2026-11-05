@@ -1,11 +1,20 @@
+
 import { useEffect, useRef, useState } from 'react'
 import { CameraPreview } from '../camera/CameraPreview'
 import { capturePhoto } from '../camera/camera'
 import { useCamera } from '../camera/useCamera'
-import { drawStripFooter, downloadStrip, PHOTO_COUNT, STRIP_HEIGHT, STRIP_WIDTH, THEMES } from './strip'
+import {
+  drawStripFooter,
+  downloadStrip,
+  PHOTO_COUNT,
+  STRIP_HEIGHT,
+  STRIP_WIDTH,
+  THEMES,
+} from './strip'
 import type { PhotoSlots, StripTheme } from './strip'
 import './capture-feedback.css'
 import './restart-confirmation.css'
+import './download-feedback.css'
 
 const COUNTDOWN_SECONDS = 3
 const FLASH_DURATION = 750
@@ -49,7 +58,6 @@ function CameraSession({
   const remaining = photos.filter((photo) => !photo).length
   const taken = PHOTO_COUNT - remaining
   const nextShot = photos.findIndex((photo) => photo === null)
-  // A selection never starts the camera countdown by itself.
   const selectedPhoto = retakeSlot ?? selectedRetake
   const activePhoto = selectedPhoto ?? nextShot
 
@@ -87,7 +95,7 @@ function CameraSession({
     clearFeedback()
     setCaptureError(null)
     if (retakeSlot !== null) {
-      onCancelRetake() // Return to the review screen with the original photo.
+      onCancelRetake()
     } else {
       setSelectedRetake(null)
     }
@@ -113,7 +121,6 @@ function CameraSession({
         if (runId.current !== id) return
       }
 
-      // Capture exactly one frame, then briefly flash the camera.
       const image = capturePhoto(video)
       onPhoto(index, image)
       setFreshPhoto(index)
@@ -123,7 +130,6 @@ function CameraSession({
       setCountdown(null)
       setSelectedRetake(null)
 
-      // Feedback disappears automatically, but the next shot never starts on its own.
       if (finishAfter) {
         onDesign()
       } else {
@@ -318,8 +324,6 @@ function StripPreview({
 }: StripPreviewProps) {
   const footerCanvasRef = useRef<HTMLCanvasElement>(null)
 
-  // The preview's text is painted with exactly the same coordinates and
-  // font-measuring logic as the downloaded PNG; only the canvas is scaled.
   useEffect(() => {
     const canvas = footerCanvasRef.current
     const ctx = canvas?.getContext('2d')
@@ -341,7 +345,9 @@ function StripPreview({
             {photos[index] ? (
               <img src={photos[index]} alt={`Strip photo ${index + 1}`} />
             ) : (
-              <div className="strip-empty"><span>0{index + 1}</span></div>
+              <div className="strip-empty">
+                <span>0{index + 1}</span>
+              </div>
             )}
           </div>
         ))}
@@ -372,12 +378,23 @@ function PhotoReview({ photos, onRetake, onReset, saving }: ReviewProps) {
           <div className="review-photo" key={index}>
             {photo && <img src={photo} alt={`Photo ${index + 1}`} />}
             <span className="review-photo-index">0{index + 1}</span>
-            <button type="button" onClick={() => onRetake(index)} disabled={saving}>Retake</button>
+            <button
+              type="button"
+              onClick={() => onRetake(index)}
+              disabled={saving}
+            >
+              Retake
+            </button>
           </div>
         ))}
       </div>
       <div className="review-bottom">
-        <button type="button" className="button button-outline" onClick={onReset} disabled={saving}>
+        <button
+          type="button"
+          className="button button-outline"
+          onClick={onReset}
+          disabled={saving}
+        >
           Start over
         </button>
       </div>
@@ -395,12 +412,13 @@ export function Photobooth() {
   const [caption, setCaption] = useState('')
   const [showDate, setShowDate] = useState(false)
   const [createdAt, setCreatedAt] = useState(() => new Date())
-  const [saving, setSaving] = useState(false)
+  const [downloadStatus, setDownloadStatus] =
+    useState<'idle' | 'preparing' | 'requested' | 'error'>('idle')
   const [saveError, setSaveError] = useState<string | null>(null)
+  const downloadLock = useRef(false)
   const [restartOpen, setRestartOpen] = useState(false)
   const restartDialogRef = useRef<HTMLDialogElement>(null)
 
-  // A native dialog handles focus trapping and Escape for us.
   useEffect(() => {
     const dialog = restartDialogRef.current
     if (!dialog) return
@@ -414,6 +432,12 @@ export function Photobooth() {
 
   const theme = THEMES.find((item) => item.id === themeId) ?? THEMES[0]
   const complete = photos.length === PHOTO_COUNT && photos.every(Boolean)
+  const saving = downloadStatus === 'preparing'
+
+  function clearDownloadFeedback() {
+    setDownloadStatus('idle')
+    setSaveError(null)
+  }
 
   function savePhoto(index: number, image: string) {
     setPhotos((previous) => previous.map((photo, slot) =>
@@ -429,11 +453,10 @@ export function Photobooth() {
     setThemeId(THEMES[0].id)
     setCaption('')
     setShowDate(false)
-    setSaveError(null)
+    clearDownloadFeedback()
   }
 
   function requestReset() {
-    // A fresh, empty booth can restart immediately.
     if (saving) return
     if (photos.some(Boolean)) {
       setRestartOpen(true)
@@ -453,6 +476,7 @@ export function Photobooth() {
   }
 
   function retake(index: number) {
+    clearDownloadFeedback()
     setRetakeSlot(index)
     setStage('camera')
   }
@@ -463,18 +487,24 @@ export function Photobooth() {
   }
 
   async function save() {
-    if (!complete || saving) return
+    if (!complete || downloadLock.current || restartOpen) return
+
+    downloadLock.current = true
     setSaveError(null)
-    setSaving(true)
+    setDownloadStatus('preparing')
 
     try {
       await downloadStrip(photos, theme, caption, showDate, createdAt)
+      setDownloadStatus('requested')
     } catch (cause) {
       setSaveError(
-        cause instanceof Error ? cause.message : 'Could not download the strip.'
+        cause instanceof Error
+          ? cause.message
+          : 'Could not prepare your PNG. Please try again.'
       )
+      setDownloadStatus('error')
     } finally {
-      setSaving(false)
+      downloadLock.current = false
     }
   }
 
@@ -494,7 +524,12 @@ export function Photobooth() {
       ) : (
         <div className="mx-auto w-full max-w-6xl px-4 py-6 md:py-10">
           <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-            <PhotoReview photos={photos} onRetake={retake} onReset={requestReset} saving={saving} />
+            <PhotoReview
+              photos={photos}
+              onRetake={retake}
+              onReset={requestReset}
+              saving={saving}
+            />
 
             <aside className="preview-card" aria-label="Photo strip customization">
               <div className="preview-stage">
@@ -516,7 +551,11 @@ export function Photobooth() {
                       className={`theme-option ${
                         themeId === option.id ? 'theme-option-selected' : ''
                       }`}
-                      onClick={() => setThemeId(option.id)}
+                      onClick={() => {
+                        setThemeId(option.id)
+                        clearDownloadFeedback()
+                      }}
+                      disabled={saving}
                       aria-pressed={themeId === option.id}
                       title={option.detail}
                     >
@@ -538,12 +577,18 @@ export function Photobooth() {
                   ))}
                 </div>
 
-                <label className="field-label" htmlFor="strip-caption">Caption</label>
+                <label className="field-label" htmlFor="strip-caption">
+                  Caption
+                </label>
                 <input
                   id="strip-caption"
                   className="caption-input"
                   value={caption}
-                  onChange={(event) => setCaption(event.target.value)}
+                  onChange={(event) => {
+                    setCaption(event.target.value)
+                    clearDownloadFeedback()
+                  }}
+                  disabled={saving}
                   maxLength={38}
                   placeholder="Optional"
                 />
@@ -552,7 +597,11 @@ export function Photobooth() {
                   <input
                     type="checkbox"
                     checked={showDate}
-                    onChange={(event) => setShowDate(event.target.checked)}
+                    onChange={(event) => {
+                      setShowDate(event.target.checked)
+                      clearDownloadFeedback()
+                    }}
+                    disabled={saving}
                   />
                   <span>Date</span>
                 </label>
@@ -562,11 +611,54 @@ export function Photobooth() {
                   className="button button-download"
                   onClick={() => void save()}
                   disabled={!complete || saving}
+                  aria-busy={saving}
                 >
-                  {saving ? 'Preparing...' : 'Download'}
+                  <span className="download-button-content">
+                    {saving && (
+                      <span className="download-spinner" aria-hidden="true" />
+                    )}
+                    {downloadStatus === 'preparing'
+                      ? 'Preparing PNG…'
+                      : downloadStatus === 'requested'
+                        ? 'Download again'
+                        : downloadStatus === 'error'
+                          ? 'Try download again'
+                          : 'Download PNG'}
+                  </span>
                 </button>
-                {saveError && (
-                  <p className="inline-error" role="alert">{saveError}</p>
+
+                {downloadStatus === 'preparing' && (
+                  <p
+                    className="download-feedback"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    Creating your high-quality photo strip…
+                  </p>
+                )}
+
+                {downloadStatus === 'requested' && (
+                  <p
+                    className="download-feedback download-feedback-requested"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    <span aria-hidden="true">✓ </span>
+                    Download requested. Check your browser's Downloads.
+                  </p>
+                )}
+
+                {downloadStatus === 'error' && (
+                  <div
+                    className="download-feedback download-feedback-error"
+                    role="alert"
+                  >
+                    <strong>Couldn't prepare your PNG.</strong>
+                    <span>{saveError}</span>
+                    <span>
+                      Your photos are still here. Select Try download again.
+                    </span>
+                  </div>
                 )}
               </div>
             </aside>
