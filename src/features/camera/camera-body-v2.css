@@ -156,7 +156,7 @@
   display: none;
 }
 
-/* Light silver, one-pixel edge — no black bezel */
+/* Slim, visible silver edge — no black bezel */
 .booth-capture-page
 .booth-camera-frame .camera-window {
   position: relative;
@@ -171,7 +171,7 @@
   aspect-ratio: 1088 / 658;
   overflow: hidden;
 
-  border: 1px solid #d5d5da;
+  border: 2px solid #c7c7cc;
   border-radius: 14px;
 
   background: #f5f5f7;
@@ -304,7 +304,7 @@
   border: 0;
   border-radius: 999px;
 
-  background: #eeeeF1;
+  background: #eeeef1;
   box-shadow: none;
 }
 
@@ -738,14 +738,14 @@
     box-shadow: none;
   }
 
-  /* Match the silver LCD outline on mobile */
+  /* Match the slim silver LCD outline on mobile */
   .booth-capture-page
   .booth-camera-frame .camera-window {
     width: 100%;
     height: auto;
 
     aspect-ratio: 1088 / 658;
-    border: 1px solid #d5d5da;
+    border: 2px solid #c7c7cc;
     border-radius: 11px;
   }
 
