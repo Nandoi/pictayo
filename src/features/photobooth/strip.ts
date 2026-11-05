@@ -16,6 +16,76 @@ export type StripTheme = {
   font: string
 }
 
+export type PhotoLayoutId = '4-cut' | '3-cut' | '2x2'
+
+export type PhotoRect = {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+export type PhotoLayout = {
+  id: PhotoLayoutId
+  name: string
+  count: number
+  width: number
+  height: number
+  slots: PhotoRect[]
+  captionY: number
+  dateY: number
+}
+
+const FOUR_CUT_SLOTS: PhotoRect[] = Array.from(
+  { length: 4 },
+  (_, index) => ({
+    x: 56,
+    y: 72 + index * (658 + 14),
+    width: 1088,
+    height: 658,
+  }),
+)
+
+const THREE_CUT_SLOTS: PhotoRect[] = FOUR_CUT_SLOTS.slice(0, 3)
+
+export const PHOTO_LAYOUTS: PhotoLayout[] = [
+  {
+    id: '4-cut',
+    name: '4-cut',
+    count: 4,
+    width: STRIP_WIDTH,
+    height: STRIP_HEIGHT,
+    slots: FOUR_CUT_SLOTS,
+    captionY: 2930,
+    dateY: 3080,
+  },
+  {
+    id: '3-cut',
+    name: '3-cut',
+    count: 3,
+    width: STRIP_WIDTH,
+    height: 2400,
+    slots: THREE_CUT_SLOTS,
+    captionY: 2200,
+    dateY: 2320,
+  },
+  {
+    id: '2x2',
+    name: '2×2',
+    count: 4,
+    width: STRIP_WIDTH,
+    height: 1080,
+    slots: [
+      { x: 56, y: 72, width: 537, height: 325 },
+      { x: 607, y: 72, width: 537, height: 325 },
+      { x: 56, y: 411, width: 537, height: 325 },
+      { x: 607, y: 411, width: 537, height: 325 },
+    ],
+    captionY: 880,
+    dateY: 1020,
+  },
+]
+
 export const THEMES: StripTheme[] = [
   {
     id: 'white',
@@ -67,16 +137,6 @@ export const THEMES: StripTheme[] = [
   },
 ]
 
-const LAYOUT = {
-  left: 56,
-  top: 72,
-  width: 1088,
-  photoHeight: 658,
-  gap: 14,
-  captionY: 2930,
-  dateY: 3080,
-} as const
-
 export function dateLabel(date: Date = new Date()): string {
   return date.toLocaleDateString('en-US', {
     month: 'short',
@@ -85,23 +145,14 @@ export function dateLabel(date: Date = new Date()): string {
   })
 }
 
-// Use local time rather than UTC when naming downloaded files.
-// Include milliseconds so repeated downloads get unique names.
 function downloadFilename(date: Date = new Date()): string {
   const pad = (value: number, length = 2) =>
     String(value).padStart(length, '0')
 
-  const year = date.getFullYear()
-  const month = pad(date.getMonth() + 1)
-  const day = pad(date.getDate())
-  const hour = pad(date.getHours())
-  const minute = pad(date.getMinutes())
-  const second = pad(date.getSeconds())
-  const millisecond = pad(date.getMilliseconds(), 3)
-
   return (
-    `pictayo-${year}-${month}-${day}-` +
-    `${hour}-${minute}-${second}-${millisecond}.png`
+    `pictayo-${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}-` +
+    `${pad(date.getHours())}-${pad(date.getMinutes())}-${pad(date.getSeconds())}-` +
+    `${pad(date.getMilliseconds(), 3)}.png`
   )
 }
 
@@ -142,9 +193,7 @@ function loadPhoto(source: string): Promise<HTMLImageElement> {
 
     image.onload = () => {
       if (image.naturalWidth <= 0 || image.naturalHeight <= 0) {
-        reject(
-          new Error('A captured photo is invalid. Please retake it.')
-        )
+        reject(new Error('A captured photo is invalid. Please retake it.'))
         return
       }
 
@@ -153,9 +202,7 @@ function loadPhoto(source: string): Promise<HTMLImageElement> {
 
     image.onerror = () => {
       reject(
-        new Error(
-          'A captured photo could not be loaded. Please retake it.'
-        )
+        new Error('A captured photo could not be loaded. Please retake it.'),
       )
     }
 
@@ -166,16 +213,11 @@ function loadPhoto(source: string): Promise<HTMLImageElement> {
 function canvasBlob(canvas: HTMLCanvasElement): Promise<Blob> {
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => {
-      if (!blob) {
-        reject(
-          new Error(
-            'Unable to prepare your PNG. Please try again.'
-          )
-        )
-        return
+      if (blob) {
+        resolve(blob)
+      } else {
+        reject(new Error('Unable to prepare your PNG. Please try again.'))
       }
-
-      resolve(blob)
     }, 'image/png')
   })
 }
@@ -184,36 +226,34 @@ function drawCaption(
   ctx: CanvasRenderingContext2D,
   caption: string,
   theme: StripTheme,
+  layout: PhotoLayout,
 ): void {
-  const maxWidth = 1050
+  const maxWidth = layout.width - 150
   let fontSize = 68
 
   while (fontSize > 34) {
     ctx.font = `bold ${fontSize}px ${theme.font}`
-
-    if (ctx.measureText(caption).width <= maxWidth) {
-      break
-    }
-
+    if (ctx.measureText(caption).width <= maxWidth) break
     fontSize -= 2
   }
 
   ctx.font = `bold ${fontSize}px ${theme.font}`
   ctx.fillText(
     caption,
-    STRIP_WIDTH / 2,
-    LAYOUT.captionY,
+    layout.width / 2,
+    layout.captionY,
     maxWidth,
   )
 }
 
-// Shared footer renderer for the preview and PNG export.
+/** Use the same footer painter for the preview and downloaded PNG. */
 export function drawStripFooter(
   ctx: CanvasRenderingContext2D,
   theme: StripTheme,
   caption: string,
   showDate: boolean,
   createdAt: Date,
+  layout: PhotoLayout = PHOTO_LAYOUTS[0],
 ): void {
   ctx.save()
 
@@ -223,15 +263,15 @@ export function drawStripFooter(
     ctx.textBaseline = 'alphabetic'
 
     if (caption.trim()) {
-      drawCaption(ctx, caption.trim(), theme)
+      drawCaption(ctx, caption.trim(), theme, layout)
     }
 
     if (showDate) {
       ctx.font = '30px Arial, sans-serif'
       ctx.fillText(
         dateLabel(createdAt).toUpperCase(),
-        STRIP_WIDTH / 2,
-        LAYOUT.dateY,
+        layout.width / 2,
+        layout.dateY,
       )
     }
   } finally {
@@ -245,63 +285,49 @@ export async function renderStrip(
   caption: string,
   showDate: boolean,
   createdAt: Date,
+  layout: PhotoLayout = PHOTO_LAYOUTS[0],
 ): Promise<Blob> {
   if (
-    photos.length !== PHOTO_COUNT ||
+    photos.length !== layout.count ||
     photos.some((photo) => !photo)
   ) {
-    throw new Error('Take all four photos before downloading.')
+    throw new Error(
+      `Take all ${layout.count} photos before downloading.`,
+    )
   }
 
   const images = await Promise.all(
     photos.map((source) => {
-      if (!source) {
-        throw new Error('A captured photo is missing.')
-      }
-
+      if (!source) throw new Error('A captured photo is missing.')
       return loadPhoto(source)
     }),
   )
 
   const canvas = document.createElement('canvas')
-  canvas.width = STRIP_WIDTH
-  canvas.height = STRIP_HEIGHT
+  canvas.width = layout.width
+  canvas.height = layout.height
 
   const ctx = canvas.getContext('2d')
 
   if (!ctx) {
-    throw new Error(
-      'Canvas export is not available in this browser.'
-    )
+    throw new Error('Canvas export is not available in this browser.')
   }
 
-  // Background only. No photo mats or borders.
   ctx.fillStyle = theme.background
-  ctx.fillRect(0, 0, STRIP_WIDTH, STRIP_HEIGHT)
+  ctx.fillRect(0, 0, layout.width, layout.height)
 
-  for (let index = 0; index < PHOTO_COUNT; index++) {
-    const y =
-      LAYOUT.top +
-      index * (LAYOUT.photoHeight + LAYOUT.gap)
-
+  layout.slots.forEach((slot, index) => {
     drawCover(
       ctx,
       images[index],
-      LAYOUT.left,
-      y,
-      LAYOUT.width,
-      LAYOUT.photoHeight,
+      slot.x,
+      slot.y,
+      slot.width,
+      slot.height,
     )
-  }
+  })
 
-  drawStripFooter(
-    ctx,
-    theme,
-    caption,
-    showDate,
-    createdAt,
-  )
-
+  drawStripFooter(ctx, theme, caption, showDate, createdAt, layout)
   return canvasBlob(canvas)
 }
 
@@ -311,6 +337,7 @@ export async function downloadStrip(
   caption: string,
   showDate: boolean,
   createdAt: Date,
+  layout: PhotoLayout = PHOTO_LAYOUTS[0],
 ): Promise<void> {
   const blob = await renderStrip(
     photos,
@@ -318,6 +345,7 @@ export async function downloadStrip(
     caption,
     showDate,
     createdAt,
+    layout,
   )
 
   const url = URL.createObjectURL(blob)
@@ -331,20 +359,13 @@ export async function downloadStrip(
     document.body.appendChild(anchor)
     anchor.click()
 
-    // This means the download was requested.
-    // It does not guarantee the browser saved the file.
     requested = true
   } finally {
     anchor.remove()
 
     if (requested) {
-      // Give the browser time to access the Blob URL.
-      window.setTimeout(() => {
-        URL.revokeObjectURL(url)
-      }, 30_000)
+      window.setTimeout(() => URL.revokeObjectURL(url), 30_000)
     } else {
-      // If an error occurred before the request,
-      // release the temporary URL immediately.
       URL.revokeObjectURL(url)
     }
   }

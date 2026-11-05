@@ -1,0 +1,136 @@
+
+/* Compact layout selector in the camera controls. */
+.booth-layout-label {
+  margin-bottom: 6px;
+  color: #686868;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.booth-layout-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  margin-bottom: 14px;
+}
+
+.booth-layout-choice {
+  min-width: 0;
+  min-height: 34px;
+  padding: 6px 4px;
+  border: 1px solid #e2e0e0;
+  border-radius: 10px;
+  background: #fff;
+  color: #555;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.booth-layout-choice-active {
+  border-color: #756c71;
+  background: #f8f0f3;
+  color: #342d31;
+}
+
+.booth-layout-choice:disabled:not(.booth-layout-choice-active) {
+  opacity: .48;
+  cursor: not-allowed;
+}
+
+.booth-layout-choice:focus-visible {
+  outline: 2px solid #242424;
+  outline-offset: 2px;
+}
+
+/* Use the exact slot coordinates from the PNG renderer. */
+.layout-strip-slots,
+.layout-mini-slots {
+  position: absolute;
+  inset: 0;
+}
+
+.layout-strip-slot,
+.layout-mini-slot {
+  overflow: hidden;
+  background: rgb(120 120 120 / 20%);
+}
+
+.layout-strip-slot img,
+.layout-mini-slot img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.layout-strip-slot .strip-empty {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.preview-stage .strip {
+  max-width: 240px;
+}
+
+@media (max-width: 820px) and (orientation: portrait) {
+  .booth-layout-options {
+    margin-bottom: 7px;
+  }
+
+  .booth-layout-choice {
+    min-height: 30px;
+    padding: 4px;
+  }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  .booth-layout-label {
+    display: none;
+  }
+
+  .booth-layout-options {
+    margin-bottom: 6px;
+  }
+
+  .booth-layout-choice {
+    min-height: 27px;
+    padding: 3px;
+  }
+}
+
+/* Switch between layouts that need the same number of photos. */
+.design-layout-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 18px;
+}
+
+.design-layout-choice {
+  min-height: 35px;
+  padding: 7px 15px;
+  border: 1px solid #dedbdd;
+  border-radius: 999px;
+  background: #fff;
+  color: #555;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.design-layout-choice-active {
+  background: #f8f0f3;
+  border-color: #756c71;
+  color: #342d31;
+}
+
+.design-layout-choice:disabled {
+  opacity: .5;
+}
+
+.design-layout-choice:focus-visible {
+  outline: 2px solid #242424;
+  outline-offset: 2px;
+}
