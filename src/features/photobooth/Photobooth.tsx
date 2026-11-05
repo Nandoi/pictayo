@@ -374,8 +374,7 @@ function CameraSession({
             className="booth-progress"
             aria-live="polite"
           >
-            {String(taken).padStart(2, '0')} /{' '}
-            {String(layout.count).padStart(2, '0')}
+            {taken} / {layout.count}
           </div>
 
           <div className="digicam-timer">
@@ -546,7 +545,7 @@ function CameraSession({
                   />
                 ) : (
                   <span className="shot-thumb-number">
-                    0{index + 1}
+                    {index + 1}
                   </span>
                 )}
 
@@ -613,7 +612,7 @@ function LayoutPhotos({
             />
           ) : !mini ? (
             <span className="strip-empty">
-              0{index + 1}
+              {index + 1}
             </span>
           ) : null}
         </div>
@@ -721,7 +720,7 @@ function PhotoReview({
             )}
 
             <span className="review-photo-index">
-              0{index + 1}
+              {index + 1}
             </span>
 
             <button
