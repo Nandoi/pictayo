@@ -1,16 +1,23 @@
 
 /*
- * PicTayo — iPod-inspired Camera
+ * PicTayo — iPod-inspired Camera V3
  *
- * White faceplate, satin aluminum edges,
- * graphite LCD, and a tactile click-wheel shutter.
+ * Clean white front, graphite display,
+ * precise silver detailing and tactile controls.
+ *
+ * This stylesheet overrides the earlier camera styles.
  */
+
+/* ========================================
+   PAGE
+   ======================================== */
 
 .booth-capture-page {
   height: auto;
   min-height: 100dvh;
   overflow: visible;
   background: #f5f5f7;
+
   font-family:
     -apple-system,
     BlinkMacSystemFont,
@@ -25,13 +32,14 @@
   width: 100%;
   height: auto;
   min-height: 100dvh;
-  padding: 28px 18px;
+
+  padding: 30px 18px;
   overflow: visible;
 }
 
-/* =========================================
-   CLASSIC iPOD-INSPIRED BODY
-   ========================================= */
+/* ========================================
+   CAMERA BODY
+   ======================================== */
 
 .booth-capture-page .booth-session {
   position: relative;
@@ -39,95 +47,86 @@
   overflow: hidden;
 
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 170px;
+  grid-template-columns: minmax(0, 1fr) 162px;
   grid-template-rows: auto auto;
   grid-template-areas:
     "camera controls"
     "gallery controls";
 
   align-items: center;
-  gap: 14px 20px;
+  gap: 15px 25px;
 
-  width: min(100%, 970px);
+  width: min(100%, 950px);
   height: auto;
   max-height: none;
   min-width: 0;
   min-height: 0;
 
-  padding: 51px 25px 23px;
+  padding: 49px 27px 25px;
 
-  border: 1px solid #b9b9bd;
-  border-radius: 32px;
+  border: 1px solid #d3d3d8;
+  border-radius: 29px;
 
   background: linear-gradient(
-    155deg,
+    165deg,
     #ffffff 0%,
-    #fafafb 36%,
-    #f0f0f2 100%
+    #fbfbfc 58%,
+    #f7f7f9 100%
   );
 
   box-shadow:
-    inset 0 2px 1px #ffffff,
-    inset 2px 0 4px rgb(255 255 255 / 85%),
-    inset -3px 0 5px rgb(80 80 90 / 8%),
-    inset 0 -3px 5px rgb(80 80 90 / 9%),
-    0 4px 0 #c6c6ca,
-    0 19px 38px rgb(30 30 40 / 12%);
+    inset 0 1px 0 #ffffff,
+    0 3px 0 #c9c9ce,
+    0 18px 42px rgb(32 32 42 / 10%);
 }
 
-/* Very subtle aluminum top seam */
+/* Thin top housing line, no heavy header bar */
 .booth-capture-page .booth-session::before {
   content: "";
-  display: block;
   position: absolute;
-  z-index: 0;
 
-  top: 0;
+  top: 37px;
   left: 0;
   right: 0;
-  height: 39px;
 
-  border-bottom: 1px solid #dedee2;
-
-  background: linear-gradient(
-    180deg,
-    #ffffff 0%,
-    #f6f6f8 52%,
-    #ececef 100%
-  );
+  height: 1px;
+  background: #ededf0;
 
   pointer-events: none;
 }
 
-/* Remove old decorative status light */
+/* Remove previous status light */
 .booth-capture-page .booth-session::after {
   content: none;
   display: none;
 }
 
-/* Actual engraved branding */
+/* Personal engraving */
 .digicam-engraving {
   position: absolute;
   z-index: 2;
-  top: 13px;
-  left: 28px;
 
-  color: #6e6e73;
+  top: 12px;
+  left: 27px;
+
+  color: #73737a;
+
   font-family:
     -apple-system,
     BlinkMacSystemFont,
     "Segoe UI",
     sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: .015em;
 
-  text-shadow: 0 1px 0 #fff;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .01em;
+
+  text-shadow: none;
   user-select: none;
   pointer-events: none;
 }
 
-/* No old fake controls or decorations */
+/* Old decorative hardware stays hidden */
 .digicam-top-housing,
 .digicam-top-visor,
 .digicam-top-power,
@@ -138,9 +137,9 @@
   display: none;
 }
 
-/* =========================================
-   CAMERA LCD
-   ========================================= */
+/* ========================================
+   LCD DISPLAY
+   ======================================== */
 
 .booth-capture-page .booth-camera-frame {
   position: relative;
@@ -148,6 +147,7 @@
   grid-area: camera;
 
   container-type: normal;
+
   display: block;
 
   width: 100%;
@@ -155,22 +155,17 @@
   min-width: 0;
   min-height: 0;
 
-  padding: 11px;
+  padding: 7px;
   overflow: visible;
 
-  border: 1px solid #cdced2;
-  border-radius: 19px;
+  border: 1px solid #e0e0e4;
+  border-radius: 16px;
 
-  background: linear-gradient(
-    150deg,
-    #ffffff,
-    #e9e9ec 90%
-  );
+  background: #f7f7f9;
 
   box-shadow:
-    inset 0 2px 1px #ffffff,
-    inset 0 -2px 3px rgb(40 40 50 / 7%),
-    0 2px 5px rgb(30 30 40 / 6%);
+    inset 0 1px 0 #ffffff,
+    0 1px 3px rgb(30 30 40 / 4%);
 }
 
 .booth-capture-page .booth-camera-frame::before,
@@ -179,7 +174,7 @@
   display: none;
 }
 
-/* Dark graphite glass frame */
+/* Dark, precision-cut screen frame */
 .booth-capture-page
 .booth-camera-frame .camera-window {
   position: relative;
@@ -194,17 +189,15 @@
   aspect-ratio: 1088 / 658;
   overflow: hidden;
 
-  border: 6px solid #1d1d1f;
-  border-radius: 11px;
+  border: 5px solid #202023;
+  border-radius: 10px;
 
-  background: #1d1d1f;
+  background: #202023;
 
-  box-shadow:
-    0 0 0 1px #a8a8ad,
-    inset 0 2px 5px rgb(0 0 0 / 35%),
-    0 2px 3px rgb(255 255 255 / 90%);
+  box-shadow: none;
 }
 
+/* Identical framing to saved photos */
 .booth-capture-page
 .booth-camera-frame .camera-video {
   display: block;
@@ -216,9 +209,9 @@
   transform: scaleX(-1);
 }
 
-/* =========================================
-   RIGHT-SIDE CONTROLS
-   ========================================= */
+/* ========================================
+   CONTROL PANEL
+   ======================================== */
 
 .booth-capture-page .booth-controls {
   position: relative;
@@ -235,8 +228,8 @@
   min-width: 0;
   min-height: 0;
 
-  gap: 22px;
-  padding: 7px 0;
+  gap: 28px;
+  padding: 5px 0;
 
   border: 0;
   border-radius: 0;
@@ -244,7 +237,6 @@
   box-shadow: none;
 }
 
-/* Remove old fake playback switch and engraving */
 .booth-capture-page .booth-controls::before,
 .booth-capture-page .booth-controls::after {
   content: none;
@@ -255,14 +247,14 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 17px;
+  gap: 20px;
 
   width: 100%;
   margin: 0;
   text-align: center;
 }
 
-/* Photo counter */
+/* Minimal photo counter */
 .booth-capture-page .booth-progress {
   color: #1d1d1f;
 
@@ -272,10 +264,11 @@
     "Segoe UI",
     sans-serif;
 
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
-  letter-spacing: .05em;
+  letter-spacing: .01em;
   line-height: 1.2;
+
   font-variant-numeric: tabular-nums;
 }
 
@@ -285,13 +278,21 @@
   display: none;
 }
 
+/* Preserve accessible guidance without showing extra text */
 .booth-capture-page .booth-help {
-  display: none;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
-/* =========================================
-   MINIMAL TIMER
-   ========================================= */
+/* ========================================
+   TIMER
+   ======================================== */
 
 .digicam-timer {
   display: flex;
@@ -306,7 +307,7 @@
   color: #86868b;
   font-size: 10px;
   font-weight: 600;
-  letter-spacing: .12em;
+  letter-spacing: .09em;
 }
 
 .digicam-timer-options {
@@ -316,29 +317,29 @@
 
   width: fit-content;
   padding: 3px;
-  gap: 2px;
+  gap: 1px;
 
-  border: 1px solid #d8d8dc;
+  border: 1px solid #dedee2;
   border-radius: 999px;
 
-  background: #e9e9ec;
-  box-shadow: inset 0 1px 2px rgb(30 30 40 / 5%);
+  background: #eeeeF0;
+  box-shadow: none;
 }
 
 .digicam-timer-button {
   display: grid;
   place-items: center;
 
-  min-width: 39px;
-  height: 32px;
-  min-height: 32px;
+  min-width: 38px;
+  height: 33px;
+  min-height: 33px;
   padding: 0 9px;
 
   border: 0;
   border-radius: 999px;
 
   background: transparent;
-  color: #6e6e73;
+  color: #77777d;
 
   font-family: inherit;
   font-size: 11px;
@@ -354,7 +355,7 @@
 }
 
 .digicam-timer-button:hover:not(:disabled) {
-  background: rgb(255 255 255 / 65%);
+  background: rgb(255 255 255 / 60%);
   color: #1d1d1f;
 }
 
@@ -363,18 +364,17 @@
   background: #ffffff;
   color: #1d1d1f;
 
-  box-shadow:
-    0 1px 3px rgb(30 30 40 / 12%);
+  box-shadow: 0 1px 3px rgb(30 30 40 / 10%);
 }
 
 .digicam-timer-button:disabled {
   cursor: not-allowed;
-  opacity: .55;
+  opacity: .5;
 }
 
-/* =========================================
-   iPOD-STYLE SHUTTER WHEEL
-   ========================================= */
+/* ========================================
+   iPOD-INSPIRED SHUTTER WHEEL
+   ======================================== */
 
 .booth-capture-page .booth-controls-bottom {
   display: flex;
@@ -387,6 +387,7 @@
   gap: 14px;
 }
 
+/* Single, clean click wheel */
 .booth-capture-page
 .booth-controls .booth-shutter {
   position: relative;
@@ -394,108 +395,86 @@
   place-items: center;
   flex: none;
 
-  width: 130px;
-  height: 130px;
-  min-width: 130px;
-  min-height: 130px;
+  width: 112px;
+  height: 112px;
+  min-width: 112px;
+  min-height: 112px;
   padding: 0;
 
   overflow: visible;
-  border: 1px solid #c1c1c6;
+
+  border: 1px solid #d5d5da;
   border-radius: 50%;
 
-  background: radial-gradient(
-    circle at 35% 23%,
-    #ffffff 0%,
-    #fafafa 37%,
-    #ebebed 77%,
-    #d6d6da 100%
-  );
-
-  color: #1d1d1f;
+  background: #e9e9ed;
+  color: #45454b;
 
   box-shadow:
-    inset 0 2px 3px #ffffff,
-    inset 0 -3px 6px rgb(45 45 55 / 9%),
-    0 0 0 4px #f4f4f6,
-    0 0 0 5px #cacace,
-    0 4px 8px rgb(30 30 40 / 12%);
+    inset 0 1px 1px #ffffff,
+    inset 0 -2px 3px rgb(30 30 40 / 5%),
+    0 1px 3px rgb(30 30 40 / 7%);
 
   transform: none;
 
   transition:
-    box-shadow .17s ease,
+    background-color .16s ease,
+    box-shadow .16s ease,
     transform .12s ease;
 }
 
-/* Remove any old dial markings */
+/* No fake symbols or decorative dial engravings */
 .booth-capture-page .booth-shutter::before,
 .booth-capture-page .booth-shutter::after {
   content: none;
   display: none;
 }
 
-/* Keep hover nearly identical to the resting state */
+/* Very subtle hover */
 .booth-capture-page
 .booth-controls .booth-shutter:hover:not(:disabled) {
-  background: radial-gradient(
-    circle at 35% 23%,
-    #ffffff 0%,
-    #fafafa 37%,
-    #ebebed 77%,
-    #d6d6da 100%
-  );
-
+  background: #ededf0;
   transform: none;
 
   box-shadow:
-    inset 0 2px 3px #ffffff,
-    inset 0 -3px 6px rgb(45 45 55 / 9%),
-    0 0 0 4px #f4f4f6,
-    0 0 0 5px #cacace,
-    0 5px 11px rgb(30 30 40 / 15%);
+    inset 0 1px 1px #ffffff,
+    inset 0 -2px 3px rgb(30 30 40 / 5%),
+    0 2px 5px rgb(30 30 40 / 10%);
 }
 
-/* Subtle physical button press */
+/* Physical press */
 .booth-capture-page
 .booth-controls .booth-shutter:active:not(:disabled) {
+  background: #e2e2e7;
   transform: translateY(1px);
 
   box-shadow:
-    inset 0 3px 6px rgb(45 45 55 / 11%),
-    0 0 0 4px #f4f4f6,
-    0 0 0 5px #cacace,
-    0 2px 4px rgb(30 30 40 / 9%);
+    inset 0 2px 4px rgb(30 30 40 / 9%),
+    0 1px 2px rgb(30 30 40 / 5%);
 }
 
 .booth-capture-page
 .booth-controls .booth-shutter:disabled {
-  opacity: .65;
-  filter: none;
+  opacity: .72;
   cursor: not-allowed;
+  filter: none;
 }
 
-/* Small polished center button */
+/* Recessed center — simple and recognizable */
 .booth-capture-page .booth-camera-icon {
   position: relative;
   z-index: 1;
 
   display: block;
 
-  width: 52px;
-  height: 52px;
-  padding: 12px;
+  width: 43px;
+  height: 43px;
+  padding: 9px;
 
-  border: 1px solid #c8c8cd;
+  border: 1px solid #d2d2d7;
   border-radius: 50%;
 
-  background: linear-gradient(
-    155deg,
-    #ffffff 0%,
-    #eeeeef 100%
-  );
-
-  color: #505055;
+  background: #f9f9fa;
+  color: #505057;
 
   fill: none;
   stroke: currentColor;
@@ -505,22 +484,24 @@
 
   box-shadow:
     inset 0 1px 1px #ffffff,
-    inset 0 -2px 3px rgb(30 30 40 / 6%),
-    0 1px 3px rgb(30 30 40 / 10%);
+    0 1px 2px rgb(30 30 40 / 7%);
 
   pointer-events: none;
 }
 
-/* Secondary functional buttons */
+/* ========================================
+   SECONDARY ACTIONS
+   ======================================== */
+
 .booth-capture-page
 .booth-controls .booth-next-button,
 .booth-capture-page
 .booth-controls .booth-cancel-retake {
-  width: min(100%, 155px);
+  width: min(100%, 150px);
   min-height: 38px;
-  padding: 9px 14px;
+  padding: 8px 13px;
 
-  border: 1px solid #d2d2d7;
+  border: 1px solid #d4d4d8;
   border-radius: 999px;
 
   background: #ffffff;
@@ -530,8 +511,7 @@
   font-size: 12px;
   font-weight: 600;
 
-  box-shadow:
-    0 1px 3px rgb(30 30 40 / 6%);
+  box-shadow: none;
 }
 
 .booth-capture-page
@@ -539,7 +519,7 @@
 .booth-capture-page
 .booth-controls .booth-cancel-retake:hover:not(:disabled) {
   background: #f5f5f7;
-  border-color: #bcbcc1;
+  border-color: #bfbfc5;
 }
 
 .booth-capture-page
@@ -556,7 +536,7 @@
 
   font-family: inherit;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
 
   box-shadow: none;
 }
@@ -566,19 +546,21 @@
   border: 0;
   background: transparent;
   color: #1d1d1f;
+
   box-shadow: none;
   transform: none;
 }
 
 .booth-capture-page .inline-error {
-  max-width: 175px;
+  max-width: 165px;
   text-align: center;
 }
 
-/* =========================================
-   PHOTO GALLERY
-   ========================================= */
+/* ========================================
+   CLEAN PHOTO PREVIEWS
+   ======================================== */
 
+/* No large gray tray */
 .booth-capture-page .booth-gallery {
   position: relative;
   z-index: 1;
@@ -592,28 +574,27 @@
   min-width: 0;
   min-height: 0;
 
-  padding: 10px;
-  border: 1px solid #dedee2;
-  border-radius: 15px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
 
-  background: #f0f0f2;
-
-  box-shadow:
-    inset 0 1px 3px rgb(30 30 40 / 5%),
-    0 1px 0 #ffffff;
+  background: transparent;
+  box-shadow: none;
 }
 
 .booth-capture-page .booth-shots-row {
   display: grid;
+
   width: 100%;
   height: auto;
   min-height: 0;
 
+  gap: 10px;
   align-items: center;
   justify-items: stretch;
-  gap: 9px;
 }
 
+/* Light, uniform thumbnail placeholders */
 .booth-capture-page
 .booth-shots-row .shot-thumb {
   position: relative;
@@ -624,17 +605,22 @@
   max-width: none;
   height: auto;
   min-height: 0;
+
   aspect-ratio: 1088 / 658;
 
   padding: 0;
   overflow: hidden;
 
-  border: 1px solid #c9c9ce;
-  border-radius: 9px;
+  border: 1px solid #e0e0e4;
+  border-radius: 10px;
 
-  background: #c6c6cc;
-
+  background: #eeeef0;
   box-shadow: none;
+
+  transition:
+    border-color .18s ease,
+    box-shadow .18s ease,
+    background-color .18s ease;
 }
 
 .booth-capture-page
@@ -650,60 +636,67 @@
   object-position: center;
 }
 
+/* Quiet numbering */
 .booth-capture-page
 .booth-shots-row .shot-thumb-number {
-  color: #77777e;
+  color: #98989e;
   font-family: inherit;
   font-size: 12px;
-  font-weight: 600;
-  letter-spacing: .05em;
+  font-weight: 500;
+  letter-spacing: 0;
 }
 
 .booth-capture-page
 .booth-shots-row .shot-thumb-filled {
-  border-color: #c9c9ce;
+  border-color: #d5d5da;
   background: #ffffff;
+  box-shadow: none;
 }
 
+/* Visible but not exaggerated retake selection */
 .booth-capture-page
 .booth-shots-row .shot-thumb-selected {
   border-color: #1d1d1f;
-  box-shadow: 0 0 0 2px #1d1d1f;
+
+  box-shadow:
+    0 0 0 1px #1d1d1f;
 }
 
 .booth-capture-page
 .booth-shots-row .shot-retake-indicator {
   position: absolute;
-  right: 5px;
-  bottom: 5px;
+  right: 6px;
+  bottom: 6px;
 
-  background: rgb(255 255 255 / 90%);
+  background: rgb(255 255 255 / 92%);
   color: #1d1d1f;
 
   border: 0;
   border-radius: 999px;
-  box-shadow: 0 1px 4px rgb(0 0 0 / 12%);
+
+  box-shadow: 0 1px 3px rgb(0 0 0 / 10%);
 }
 
-/* =========================================
-   FOCUS AND MOTION
-   ========================================= */
+/* ========================================
+   ACCESSIBILITY
+   ======================================== */
 
 .booth-capture-page button:focus-visible {
   outline: 2px solid #1d1d1f;
-  outline-offset: 4px;
+  outline-offset: 3px;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .booth-capture-page .booth-shutter,
+  .booth-capture-page .shot-thumb,
   .digicam-timer-button {
     transition: none;
   }
 }
 
-/* =========================================
-   MOBILE
-   ========================================= */
+/* ========================================
+   TABLET AND MOBILE
+   ======================================== */
 
 @media (max-width: 820px) {
   .booth-capture-page .booth-page {
@@ -718,32 +711,33 @@
       "controls"
       "gallery";
 
-    gap: 13px;
+    gap: 14px;
+
     width: min(100%, 580px);
     height: auto;
     max-height: none;
 
-    padding: 50px 14px 16px;
+    padding: 50px 14px 17px;
     border-radius: 25px;
   }
 
   .digicam-engraving {
-    top: 14px;
+    top: 13px;
     left: 21px;
   }
 
   .booth-capture-page .booth-camera-frame {
     height: auto;
-    padding: 8px;
-    border-radius: 14px;
+    padding: 6px;
+    border-radius: 13px;
   }
 
   .booth-capture-page
   .booth-camera-frame .camera-window {
     width: 100%;
     height: auto;
-    aspect-ratio: 1088 / 658;
 
+    aspect-ratio: 1088 / 658;
     border-width: 4px;
     border-radius: 8px;
   }
@@ -755,13 +749,14 @@
 
     width: 100%;
     height: auto;
+
     gap: 10px;
     padding: 5px 2px;
   }
 
   .booth-capture-page .booth-controls-top {
     align-items: flex-start;
-    gap: 10px;
+    gap: 13px;
 
     width: auto;
     flex: 1;
@@ -777,21 +772,17 @@
 
   .digicam-timer {
     align-items: flex-start;
-    gap: 6px;
+    gap: 7px;
   }
 
   .digicam-timer-button {
-    min-width: 35px;
-    height: 30px;
-    min-height: 30px;
+    min-width: 34px;
+    height: 31px;
+    min-height: 31px;
     padding: 0 7px;
   }
 
   .booth-capture-page .booth-controls-bottom {
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-
     width: auto;
     flex: none;
     gap: 8px;
@@ -799,16 +790,16 @@
 
   .booth-capture-page
   .booth-controls .booth-shutter {
-    width: 79px;
-    height: 79px;
-    min-width: 79px;
-    min-height: 79px;
+    width: 78px;
+    height: 78px;
+    min-width: 78px;
+    min-height: 78px;
   }
 
   .booth-capture-page .booth-camera-icon {
-    width: 35px;
-    height: 35px;
-    padding: 8px;
+    width: 34px;
+    height: 34px;
+    padding: 7px;
   }
 
   .booth-capture-page
@@ -817,23 +808,19 @@
   .booth-controls .booth-cancel-retake {
     width: auto;
     max-width: 130px;
-    min-height: 34px;
+    min-height: 35px;
     padding: 7px 10px;
+
     font-size: 11px;
   }
 
-  .booth-capture-page .booth-gallery {
-    padding: 8px;
-    border-radius: 12px;
-  }
-
   .booth-capture-page .booth-shots-row {
-    gap: 6px;
+    gap: 7px;
   }
 
   .booth-capture-page
   .booth-shots-row .shot-thumb {
-    border-radius: 6px;
+    border-radius: 7px;
   }
 }
 
@@ -843,7 +830,7 @@
   }
 
   .booth-capture-page .booth-controls {
-    gap: 5px;
+    gap: 6px;
   }
 
   .digicam-timer-button {
