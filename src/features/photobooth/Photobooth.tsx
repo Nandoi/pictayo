@@ -23,9 +23,12 @@ import './restart-confirmation.css'
 import './download-feedback.css'
 import './photo-layouts.css'
 
-const COUNTDOWN_SECONDS = 3
 const FLASH_DURATION = 750
 const SAVED_FEEDBACK_DURATION = 1800
+
+type TimerOption = 0 | 3 | 5
+
+const TIMER_OPTIONS: TimerOption[] = [0, 3, 5]
 
 const sleep = (ms: number) =>
   new Promise<void>((resolve) => window.setTimeout(resolve, ms))
@@ -42,7 +45,6 @@ function photoRectStyle(
     height: `${(rect.height / layout.height) * 100}%`,
   }
 }
-
 
 function LayoutPicker({
   onSelect,
@@ -127,6 +129,7 @@ function CameraSession({
   onReset,
 }: CameraSessionProps) {
   const { videoRef, error, loading, retry } = useCamera()
+
   const [ready, setReady] = useState(false)
   const [busy, setBusy] = useState(false)
   const [countdown, setCountdown] =
@@ -142,12 +145,16 @@ function CameraSession({
   const [freshPhoto, setFreshPhoto] =
     useState<number | null>(null)
 
+  const [timerSeconds, setTimerSeconds] =
+    useState<TimerOption>(3)
+
   const runId = useRef(0)
   const feedbackTimer = useRef<number | null>(null)
   const capturing = useRef(false)
 
   const completed =
     photos.length === layout.count && photos.every(Boolean)
+
   const taken = photos.filter(Boolean).length
   const nextShot = photos.findIndex((photo) => photo === null)
   const selectedPhoto = retakeSlot ?? selectedRetake
@@ -182,7 +189,9 @@ function CameraSession({
       busy ||
       retakeSlot !== null ||
       !photos[index]
-    ) return
+    ) {
+      return
+    }
 
     clearFeedback()
     setCaptureError(null)
@@ -207,7 +216,7 @@ function CameraSession({
 
   async function takeShot(
     index: number,
-    finishAfter = false
+    finishAfter = false,
   ) {
     if (
       capturing.current ||
@@ -216,9 +225,12 @@ function CameraSession({
       error ||
       !ready ||
       index < 0
-    ) return
+    ) {
+      return
+    }
 
     const video = videoRef.current
+
     if (!video) return
 
     const id = ++runId.current
@@ -231,21 +243,24 @@ function CameraSession({
 
     try {
       for (
-        let second = COUNTDOWN_SECONDS;
+        let second = timerSeconds;
         second >= 1;
         second--
       ) {
         setCountdown(second)
+
         await sleep(1000)
 
         if (runId.current !== id) return
       }
 
       const image = capturePhoto(video)
+
       onPhoto(index, image)
       setFreshPhoto(index)
 
       setCountdown('flash')
+
       await sleep(FLASH_DURATION)
 
       if (runId.current !== id) return
@@ -292,11 +307,33 @@ function CameraSession({
     }
   }
 
+  const captureDisabled =
+    busy ||
+    loading ||
+    !ready ||
+    Boolean(error) ||
+    (completed && selectedPhoto === null)
+
+  const shutterLabel = busy
+    ? `Capturing photo ${(currentShot ?? 0) + 1}`
+    : selectedPhoto !== null
+      ? `Retake photo ${selectedPhoto + 1}`
+      : completed
+        ? 'All photos taken'
+        : `Take photo ${nextShot + 1}`
+
   return (
     <section
       className="booth-session"
       aria-label="Photobooth capture"
     >
+      <span
+        className="digicam-engraving"
+        aria-hidden="true"
+      >
+        Fer &lt;3 Mia
+      </span>
+
       <div className="booth-camera-frame">
         <CameraPreview
           videoRef={videoRef}
@@ -322,6 +359,7 @@ function CameraSession({
             >
               ✓
             </span>
+
             Photo {savedPhoto + 1} saved
           </div>
         )}
@@ -336,53 +374,72 @@ function CameraSession({
             className="booth-progress"
             aria-live="polite"
           >
-            {String(taken).padStart(2, '0')} / {String(layout.count).padStart(2, '0')}
+            {String(taken).padStart(2, '0')} /{' '}
+            {String(layout.count).padStart(2, '0')}
           </div>
 
-          <p className="booth-help" aria-live="polite">
+          <div className="digicam-timer">
+            <span
+              className="digicam-timer-label"
+              id="digicam-timer-label"
+            >
+              TIMER
+            </span>
+
+            <div
+              className="digicam-timer-options"
+              role="group"
+              aria-labelledby="digicam-timer-label"
+            >
+              {TIMER_OPTIONS.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  className={`digicam-timer-button ${
+                    timerSeconds === option
+                      ? 'digicam-timer-button-active'
+                      : ''
+                  }`}
+                  aria-pressed={timerSeconds === option}
+                  onClick={() => setTimerSeconds(option)}
+                  disabled={busy}
+                >
+                  {option === 0 ? 'Off' : `${option}s`}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <p
+            className="booth-help"
+            aria-live="polite"
+          >
             {selectedPhoto !== null
-              ? `Photo ${selectedPhoto + 1} selected. Press Retake when you're ready.`
+              ? `Photo ${selectedPhoto + 1} selected for retake.`
               : completed
-                ? 'All photos taken. Choose a photo to retake, or continue.'
-                : 'Take your time. The next photo starts only when you click.'}
+                ? 'All photos taken.'
+                : 'Press the shutter when ready.'}
           </p>
         </div>
 
         <div className="booth-controls-bottom">
-          {(!completed || selectedPhoto !== null) && (
-            <button
-              type="button"
-              className="button button-primary booth-shutter"
-              onClick={handleCapture}
-              disabled={
-                busy ||
-                loading ||
-                !ready ||
-                Boolean(error)
-              }
-              aria-label={
-                busy
-                  ? `Capturing photo ${(currentShot ?? 0) + 1}`
-                  : selectedPhoto !== null
-                    ? `Retake photo ${selectedPhoto + 1}`
-                    : `Take photo ${nextShot + 1}`
-              }
-              title={
-                selectedPhoto !== null
-                  ? `Retake photo ${selectedPhoto + 1}`
-                  : `Take photo ${nextShot + 1}`
-              }
+          <button
+            type="button"
+            className="button button-primary booth-shutter"
+            onClick={handleCapture}
+            disabled={captureDisabled}
+            aria-label={shutterLabel}
+            title={shutterLabel}
+          >
+            <svg
+              className="booth-camera-icon"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
             >
-              <svg
-                className="booth-camera-icon"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z" />
-                <circle cx="12" cy="13" r="3.5" />
-              </svg>
-            </button>
-          )}
+              <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z" />
+              <circle cx="12" cy="13" r="3.5" />
+            </svg>
+          </button>
 
           {selectedPhoto !== null && (
             <button
@@ -407,7 +464,10 @@ function CameraSession({
           )}
 
           {captureError && (
-            <p className="inline-error" role="alert">
+            <p
+              className="inline-error"
+              role="alert"
+            >
               {captureError}
             </p>
           )}
@@ -498,6 +558,7 @@ function CameraSession({
                     <span className="booth-retake-symbol">
                       ↻
                     </span>
+
                     <span className="booth-retake-text">
                       {selectedPhoto === index
                         ? 'Selected'
@@ -514,7 +575,6 @@ function CameraSession({
   )
 }
 
-/** Shared positioning for the preview and theme thumbnails */
 function LayoutPhotos({
   photos,
   layout,
@@ -979,6 +1039,7 @@ export function Photobooth() {
                     }}
                     disabled={saving}
                   />
+
                   <span>Date</span>
                 </label>
 
@@ -1023,7 +1084,9 @@ export function Photobooth() {
                     role="status"
                     aria-live="polite"
                   >
-                    <span aria-hidden="true">✓ </span>
+                    <span aria-hidden="true">
+                      ✓{' '}
+                    </span>
                     Download requested. Check your browser's Downloads.
                   </p>
                 )}

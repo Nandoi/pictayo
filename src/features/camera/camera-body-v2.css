@@ -1,0 +1,862 @@
+
+/*
+ * PicTayo — iPod-inspired Camera
+ *
+ * White faceplate, satin aluminum edges,
+ * graphite LCD, and a tactile click-wheel shutter.
+ */
+
+.booth-capture-page {
+  height: auto;
+  min-height: 100dvh;
+  overflow: visible;
+  background: #f5f5f7;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+.booth-capture-page .booth-page {
+  display: grid;
+  place-items: center;
+
+  width: 100%;
+  height: auto;
+  min-height: 100dvh;
+  padding: 28px 18px;
+  overflow: visible;
+}
+
+/* =========================================
+   CLASSIC iPOD-INSPIRED BODY
+   ========================================= */
+
+.booth-capture-page .booth-session {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 170px;
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    "camera controls"
+    "gallery controls";
+
+  align-items: center;
+  gap: 14px 20px;
+
+  width: min(100%, 970px);
+  height: auto;
+  max-height: none;
+  min-width: 0;
+  min-height: 0;
+
+  padding: 51px 25px 23px;
+
+  border: 1px solid #b9b9bd;
+  border-radius: 32px;
+
+  background: linear-gradient(
+    155deg,
+    #ffffff 0%,
+    #fafafb 36%,
+    #f0f0f2 100%
+  );
+
+  box-shadow:
+    inset 0 2px 1px #ffffff,
+    inset 2px 0 4px rgb(255 255 255 / 85%),
+    inset -3px 0 5px rgb(80 80 90 / 8%),
+    inset 0 -3px 5px rgb(80 80 90 / 9%),
+    0 4px 0 #c6c6ca,
+    0 19px 38px rgb(30 30 40 / 12%);
+}
+
+/* Very subtle aluminum top seam */
+.booth-capture-page .booth-session::before {
+  content: "";
+  display: block;
+  position: absolute;
+  z-index: 0;
+
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 39px;
+
+  border-bottom: 1px solid #dedee2;
+
+  background: linear-gradient(
+    180deg,
+    #ffffff 0%,
+    #f6f6f8 52%,
+    #ececef 100%
+  );
+
+  pointer-events: none;
+}
+
+/* Remove old decorative status light */
+.booth-capture-page .booth-session::after {
+  content: none;
+  display: none;
+}
+
+/* Actual engraved branding */
+.digicam-engraving {
+  position: absolute;
+  z-index: 2;
+  top: 13px;
+  left: 28px;
+
+  color: #6e6e73;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .015em;
+
+  text-shadow: 0 1px 0 #fff;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* No old fake controls or decorations */
+.digicam-top-housing,
+.digicam-top-visor,
+.digicam-top-power,
+.digicam-top-control-wheel,
+.digicam-right-grip,
+.digicam-lcd-brand,
+.digicam-lcd-bottom {
+  display: none;
+}
+
+/* =========================================
+   CAMERA LCD
+   ========================================= */
+
+.booth-capture-page .booth-camera-frame {
+  position: relative;
+  z-index: 1;
+  grid-area: camera;
+
+  container-type: normal;
+  display: block;
+
+  width: 100%;
+  height: auto;
+  min-width: 0;
+  min-height: 0;
+
+  padding: 11px;
+  overflow: visible;
+
+  border: 1px solid #cdced2;
+  border-radius: 19px;
+
+  background: linear-gradient(
+    150deg,
+    #ffffff,
+    #e9e9ec 90%
+  );
+
+  box-shadow:
+    inset 0 2px 1px #ffffff,
+    inset 0 -2px 3px rgb(40 40 50 / 7%),
+    0 2px 5px rgb(30 30 40 / 6%);
+}
+
+.booth-capture-page .booth-camera-frame::before,
+.booth-capture-page .booth-camera-frame::after {
+  content: none;
+  display: none;
+}
+
+/* Dark graphite glass frame */
+.booth-capture-page
+.booth-camera-frame .camera-window {
+  position: relative;
+  display: block;
+
+  width: 100%;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  min-height: 0;
+
+  aspect-ratio: 1088 / 658;
+  overflow: hidden;
+
+  border: 6px solid #1d1d1f;
+  border-radius: 11px;
+
+  background: #1d1d1f;
+
+  box-shadow:
+    0 0 0 1px #a8a8ad,
+    inset 0 2px 5px rgb(0 0 0 / 35%),
+    0 2px 3px rgb(255 255 255 / 90%);
+}
+
+.booth-capture-page
+.booth-camera-frame .camera-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+  object-position: center;
+  transform: scaleX(-1);
+}
+
+/* =========================================
+   RIGHT-SIDE CONTROLS
+   ========================================= */
+
+.booth-capture-page .booth-controls {
+  position: relative;
+  z-index: 1;
+  grid-area: controls;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+
+  gap: 22px;
+  padding: 7px 0;
+
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Remove old fake playback switch and engraving */
+.booth-capture-page .booth-controls::before,
+.booth-capture-page .booth-controls::after {
+  content: none;
+  display: none;
+}
+
+.booth-capture-page .booth-controls-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 17px;
+
+  width: 100%;
+  margin: 0;
+  text-align: center;
+}
+
+/* Photo counter */
+.booth-capture-page .booth-progress {
+  color: #1d1d1f;
+
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: .05em;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.booth-capture-page .booth-progress::before,
+.booth-capture-page .booth-progress::after {
+  content: none;
+  display: none;
+}
+
+.booth-capture-page .booth-help {
+  display: none;
+}
+
+/* =========================================
+   MINIMAL TIMER
+   ========================================= */
+
+.digicam-timer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+
+  width: 100%;
+}
+
+.digicam-timer-label {
+  color: #86868b;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .12em;
+}
+
+.digicam-timer-options {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: fit-content;
+  padding: 3px;
+  gap: 2px;
+
+  border: 1px solid #d8d8dc;
+  border-radius: 999px;
+
+  background: #e9e9ec;
+  box-shadow: inset 0 1px 2px rgb(30 30 40 / 5%);
+}
+
+.digicam-timer-button {
+  display: grid;
+  place-items: center;
+
+  min-width: 39px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0 9px;
+
+  border: 0;
+  border-radius: 999px;
+
+  background: transparent;
+  color: #6e6e73;
+
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+
+  box-shadow: none;
+  cursor: pointer;
+
+  transition:
+    background-color .16s ease,
+    color .16s ease,
+    box-shadow .16s ease;
+}
+
+.digicam-timer-button:hover:not(:disabled) {
+  background: rgb(255 255 255 / 65%);
+  color: #1d1d1f;
+}
+
+.digicam-timer-button-active,
+.digicam-timer-button-active:hover:not(:disabled) {
+  background: #ffffff;
+  color: #1d1d1f;
+
+  box-shadow:
+    0 1px 3px rgb(30 30 40 / 12%);
+}
+
+.digicam-timer-button:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+}
+
+/* =========================================
+   iPOD-STYLE SHUTTER WHEEL
+   ========================================= */
+
+.booth-capture-page .booth-controls-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  min-width: 0;
+  gap: 14px;
+}
+
+.booth-capture-page
+.booth-controls .booth-shutter {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+
+  width: 130px;
+  height: 130px;
+  min-width: 130px;
+  min-height: 130px;
+  padding: 0;
+
+  overflow: visible;
+  border: 1px solid #c1c1c6;
+  border-radius: 50%;
+
+  background: radial-gradient(
+    circle at 35% 23%,
+    #ffffff 0%,
+    #fafafa 37%,
+    #ebebed 77%,
+    #d6d6da 100%
+  );
+
+  color: #1d1d1f;
+
+  box-shadow:
+    inset 0 2px 3px #ffffff,
+    inset 0 -3px 6px rgb(45 45 55 / 9%),
+    0 0 0 4px #f4f4f6,
+    0 0 0 5px #cacace,
+    0 4px 8px rgb(30 30 40 / 12%);
+
+  transform: none;
+
+  transition:
+    box-shadow .17s ease,
+    transform .12s ease;
+}
+
+/* Remove any old dial markings */
+.booth-capture-page .booth-shutter::before,
+.booth-capture-page .booth-shutter::after {
+  content: none;
+  display: none;
+}
+
+/* Keep hover nearly identical to the resting state */
+.booth-capture-page
+.booth-controls .booth-shutter:hover:not(:disabled) {
+  background: radial-gradient(
+    circle at 35% 23%,
+    #ffffff 0%,
+    #fafafa 37%,
+    #ebebed 77%,
+    #d6d6da 100%
+  );
+
+  transform: none;
+
+  box-shadow:
+    inset 0 2px 3px #ffffff,
+    inset 0 -3px 6px rgb(45 45 55 / 9%),
+    0 0 0 4px #f4f4f6,
+    0 0 0 5px #cacace,
+    0 5px 11px rgb(30 30 40 / 15%);
+}
+
+/* Subtle physical button press */
+.booth-capture-page
+.booth-controls .booth-shutter:active:not(:disabled) {
+  transform: translateY(1px);
+
+  box-shadow:
+    inset 0 3px 6px rgb(45 45 55 / 11%),
+    0 0 0 4px #f4f4f6,
+    0 0 0 5px #cacace,
+    0 2px 4px rgb(30 30 40 / 9%);
+}
+
+.booth-capture-page
+.booth-controls .booth-shutter:disabled {
+  opacity: .65;
+  filter: none;
+  cursor: not-allowed;
+}
+
+/* Small polished center button */
+.booth-capture-page .booth-camera-icon {
+  position: relative;
+  z-index: 1;
+
+  display: block;
+
+  width: 52px;
+  height: 52px;
+  padding: 12px;
+
+  border: 1px solid #c8c8cd;
+  border-radius: 50%;
+
+  background: linear-gradient(
+    155deg,
+    #ffffff 0%,
+    #eeeeef 100%
+  );
+
+  color: #505055;
+
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+
+  box-shadow:
+    inset 0 1px 1px #ffffff,
+    inset 0 -2px 3px rgb(30 30 40 / 6%),
+    0 1px 3px rgb(30 30 40 / 10%);
+
+  pointer-events: none;
+}
+
+/* Secondary functional buttons */
+.booth-capture-page
+.booth-controls .booth-next-button,
+.booth-capture-page
+.booth-controls .booth-cancel-retake {
+  width: min(100%, 155px);
+  min-height: 38px;
+  padding: 9px 14px;
+
+  border: 1px solid #d2d2d7;
+  border-radius: 999px;
+
+  background: #ffffff;
+  color: #1d1d1f;
+
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+
+  box-shadow:
+    0 1px 3px rgb(30 30 40 / 6%);
+}
+
+.booth-capture-page
+.booth-controls .booth-next-button:hover:not(:disabled),
+.booth-capture-page
+.booth-controls .booth-cancel-retake:hover:not(:disabled) {
+  background: #f5f5f7;
+  border-color: #bcbcc1;
+}
+
+.booth-capture-page
+.booth-controls .booth-reset {
+  width: auto;
+  min-height: 32px;
+  padding: 5px 9px;
+
+  border: 0;
+  border-radius: 6px;
+
+  background: transparent;
+  color: #86868b;
+
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+
+  box-shadow: none;
+}
+
+.booth-capture-page
+.booth-controls .booth-reset:hover:not(:disabled) {
+  border: 0;
+  background: transparent;
+  color: #1d1d1f;
+  box-shadow: none;
+  transform: none;
+}
+
+.booth-capture-page .inline-error {
+  max-width: 175px;
+  text-align: center;
+}
+
+/* =========================================
+   PHOTO GALLERY
+   ========================================= */
+
+.booth-capture-page .booth-gallery {
+  position: relative;
+  z-index: 1;
+  grid-area: gallery;
+
+  display: grid;
+  align-items: center;
+
+  width: 100%;
+  height: auto;
+  min-width: 0;
+  min-height: 0;
+
+  padding: 10px;
+  border: 1px solid #dedee2;
+  border-radius: 15px;
+
+  background: #f0f0f2;
+
+  box-shadow:
+    inset 0 1px 3px rgb(30 30 40 / 5%),
+    0 1px 0 #ffffff;
+}
+
+.booth-capture-page .booth-shots-row {
+  display: grid;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+
+  align-items: center;
+  justify-items: stretch;
+  gap: 9px;
+}
+
+.booth-capture-page
+.booth-shots-row .shot-thumb {
+  position: relative;
+  display: grid;
+  place-items: center;
+
+  width: 100%;
+  max-width: none;
+  height: auto;
+  min-height: 0;
+  aspect-ratio: 1088 / 658;
+
+  padding: 0;
+  overflow: hidden;
+
+  border: 1px solid #c9c9ce;
+  border-radius: 9px;
+
+  background: #c6c6cc;
+
+  box-shadow: none;
+}
+
+.booth-capture-page
+.booth-shots-row .shot-thumb img {
+  position: absolute;
+  inset: 0;
+
+  display: block;
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+  object-position: center;
+}
+
+.booth-capture-page
+.booth-shots-row .shot-thumb-number {
+  color: #77777e;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .05em;
+}
+
+.booth-capture-page
+.booth-shots-row .shot-thumb-filled {
+  border-color: #c9c9ce;
+  background: #ffffff;
+}
+
+.booth-capture-page
+.booth-shots-row .shot-thumb-selected {
+  border-color: #1d1d1f;
+  box-shadow: 0 0 0 2px #1d1d1f;
+}
+
+.booth-capture-page
+.booth-shots-row .shot-retake-indicator {
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+
+  background: rgb(255 255 255 / 90%);
+  color: #1d1d1f;
+
+  border: 0;
+  border-radius: 999px;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 12%);
+}
+
+/* =========================================
+   FOCUS AND MOTION
+   ========================================= */
+
+.booth-capture-page button:focus-visible {
+  outline: 2px solid #1d1d1f;
+  outline-offset: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .booth-capture-page .booth-shutter,
+  .digicam-timer-button {
+    transition: none;
+  }
+}
+
+/* =========================================
+   MOBILE
+   ========================================= */
+
+@media (max-width: 820px) {
+  .booth-capture-page .booth-page {
+    padding: 15px 10px;
+  }
+
+  .booth-capture-page .booth-session {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    grid-template-areas:
+      "camera"
+      "controls"
+      "gallery";
+
+    gap: 13px;
+    width: min(100%, 580px);
+    height: auto;
+    max-height: none;
+
+    padding: 50px 14px 16px;
+    border-radius: 25px;
+  }
+
+  .digicam-engraving {
+    top: 14px;
+    left: 21px;
+  }
+
+  .booth-capture-page .booth-camera-frame {
+    height: auto;
+    padding: 8px;
+    border-radius: 14px;
+  }
+
+  .booth-capture-page
+  .booth-camera-frame .camera-window {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1088 / 658;
+
+    border-width: 4px;
+    border-radius: 8px;
+  }
+
+  .booth-capture-page .booth-controls {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+
+    width: 100%;
+    height: auto;
+    gap: 10px;
+    padding: 5px 2px;
+  }
+
+  .booth-capture-page .booth-controls-top {
+    align-items: flex-start;
+    gap: 10px;
+
+    width: auto;
+    flex: 1;
+    min-width: 0;
+
+    text-align: left;
+  }
+
+  .booth-capture-page .booth-progress {
+    font-size: 14px;
+    text-align: left;
+  }
+
+  .digicam-timer {
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .digicam-timer-button {
+    min-width: 35px;
+    height: 30px;
+    min-height: 30px;
+    padding: 0 7px;
+  }
+
+  .booth-capture-page .booth-controls-bottom {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    width: auto;
+    flex: none;
+    gap: 8px;
+  }
+
+  .booth-capture-page
+  .booth-controls .booth-shutter {
+    width: 79px;
+    height: 79px;
+    min-width: 79px;
+    min-height: 79px;
+  }
+
+  .booth-capture-page .booth-camera-icon {
+    width: 35px;
+    height: 35px;
+    padding: 8px;
+  }
+
+  .booth-capture-page
+  .booth-controls .booth-next-button,
+  .booth-capture-page
+  .booth-controls .booth-cancel-retake {
+    width: auto;
+    max-width: 130px;
+    min-height: 34px;
+    padding: 7px 10px;
+    font-size: 11px;
+  }
+
+  .booth-capture-page .booth-gallery {
+    padding: 8px;
+    border-radius: 12px;
+  }
+
+  .booth-capture-page .booth-shots-row {
+    gap: 6px;
+  }
+
+  .booth-capture-page
+  .booth-shots-row .shot-thumb {
+    border-radius: 6px;
+  }
+}
+
+@media (max-width: 380px) {
+  .booth-capture-page .booth-session {
+    padding-inline: 10px;
+  }
+
+  .booth-capture-page .booth-controls {
+    gap: 5px;
+  }
+
+  .digicam-timer-button {
+    min-width: 32px;
+    padding-inline: 6px;
+    font-size: 10px;
+  }
+
+  .booth-capture-page
+  .booth-controls .booth-shutter {
+    width: 70px;
+    height: 70px;
+    min-width: 70px;
+    min-height: 70px;
+  }
+}
