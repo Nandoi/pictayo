@@ -1,0 +1,856 @@
+
+/*
+ * PicTayo — iPod-Inspired Camera V4
+ *
+ * Pearl-white body, slim silver LCD edge,
+ * matte click wheel and minimal photo previews.
+ */
+
+.booth-capture-page {
+  height: auto;
+  min-height: 100dvh;
+  overflow: visible;
+  background: #f5f5f7;
+
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+.booth-capture-page .booth-page {
+  display: grid;
+  place-items: center;
+
+  width: 100%;
+  height: auto;
+  min-height: 100dvh;
+
+  padding: 30px 18px;
+  overflow: visible;
+}
+
+/* ========================================
+   DEVICE SHELL
+   ======================================== */
+
+.booth-capture-page .booth-session {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 160px;
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    "camera controls"
+    "gallery controls";
+
+  align-items: center;
+  gap: 16px 26px;
+
+  width: min(100%, 950px);
+  height: auto;
+  max-height: none;
+  min-width: 0;
+  min-height: 0;
+
+  padding: 53px 28px 28px;
+
+  border: 1px solid #dedee3;
+  border-radius: 30px;
+
+  background: linear-gradient(
+    165deg,
+    #ffffff 0%,
+    #fcfcfd 65%,
+    #fafafb 100%
+  );
+
+  box-shadow:
+    inset 0 1px 0 #ffffff,
+    0 2px 0 #d1d1d6,
+    0 20px 45px rgb(30 30 40 / 8%);
+}
+
+/* Slim silver seam beneath the personal engraving */
+.booth-capture-page .booth-session::before {
+  content: "";
+  position: absolute;
+  display: block;
+  top: 41px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #e4e4e8;
+  pointer-events: none;
+}
+
+.booth-capture-page .booth-session::after {
+  content: none;
+  display: none;
+}
+
+/* Personal engraving */
+.digicam-engraving {
+  position: absolute;
+  z-index: 2;
+
+  top: 18px;
+  left: 29px;
+
+  color: #85858b;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .01em;
+
+  text-shadow: none;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Remove legacy decorative hardware */
+.digicam-top-housing,
+.digicam-top-visor,
+.digicam-top-power,
+.digicam-top-control-wheel,
+.digicam-right-grip,
+.digicam-lcd-brand,
+.digicam-lcd-bottom {
+  display: none;
+}
+
+/* ========================================
+   SEAMLESS CAMERA LCD
+   ======================================== */
+
+.booth-capture-page .booth-camera-frame {
+  position: relative;
+  z-index: 1;
+  grid-area: camera;
+
+  container-type: normal;
+
+  display: block;
+
+  width: 100%;
+  height: auto;
+  min-width: 0;
+  min-height: 0;
+
+  padding: 0;
+  overflow: visible;
+
+  border: 0;
+  border-radius: 14px;
+
+  background: transparent;
+  box-shadow: none;
+}
+
+.booth-capture-page .booth-camera-frame::before,
+.booth-capture-page .booth-camera-frame::after {
+  content: none;
+  display: none;
+}
+
+/* Slim, visible silver edge — no black bezel */
+.booth-capture-page
+.booth-camera-frame .camera-window {
+  position: relative;
+  display: block;
+
+  width: 100%;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  min-height: 0;
+
+  aspect-ratio: 1088 / 658;
+  overflow: hidden;
+
+  border: 2px solid #c7c7cc;
+  border-radius: 14px;
+
+  background: #f5f5f7;
+  box-shadow: none;
+}
+
+/* Preserve the original selfie framing */
+.booth-capture-page
+.booth-camera-frame .camera-video {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+  object-position: center;
+  transform: scaleX(-1);
+}
+
+/* ========================================
+   CONTROL AREA
+   ======================================== */
+
+.booth-capture-page .booth-controls {
+  position: relative;
+  z-index: 1;
+  grid-area: controls;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+
+  gap: 32px;
+  padding: 0;
+
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.booth-capture-page .booth-controls::before,
+.booth-capture-page .booth-controls::after {
+  content: none;
+  display: none;
+}
+
+.booth-capture-page .booth-controls-top {
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 19px;
+
+  width: 100%;
+  margin: 0;
+  text-align: center;
+}
+
+/* Photo counter */
+.booth-capture-page .booth-progress {
+  color: #1d1d1f;
+  font-family: inherit;
+
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.2;
+
+  font-variant-numeric: tabular-nums;
+}
+
+.booth-capture-page .booth-progress::before,
+.booth-capture-page .booth-progress::after {
+  content: none;
+  display: none;
+}
+
+/* Keep guidance available to screen readers */
+.booth-capture-page .booth-help {
+  display: block;
+  position: absolute;
+
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ========================================
+   TIMER
+   ======================================== */
+
+.digicam-timer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+
+  width: 100%;
+}
+
+.digicam-timer-label {
+  color: #939398;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .09em;
+}
+
+.digicam-timer-options {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: fit-content;
+  padding: 3px;
+  gap: 2px;
+
+  border: 0;
+  border-radius: 999px;
+
+  background: #eeeef1;
+  box-shadow: none;
+}
+
+.digicam-timer-button {
+  display: grid;
+  place-items: center;
+
+  min-width: 39px;
+  height: 33px;
+  min-height: 33px;
+  padding: 0 9px;
+
+  border: 0;
+  border-radius: 999px;
+
+  background: transparent;
+  color: #77777d;
+
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+
+  box-shadow: none;
+  cursor: pointer;
+
+  transition:
+    background-color .16s ease,
+    color .16s ease,
+    box-shadow .16s ease;
+}
+
+.digicam-timer-button:hover:not(:disabled) {
+  background: rgb(255 255 255 / 70%);
+  color: #1d1d1f;
+}
+
+.digicam-timer-button-active,
+.digicam-timer-button-active:hover:not(:disabled) {
+  background: #ffffff;
+  color: #1d1d1f;
+
+  box-shadow:
+    0 1px 3px rgb(30 30 40 / 10%);
+}
+
+.digicam-timer-button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+/* ========================================
+   iPOD CLICK-WHEEL SHUTTER
+   ======================================== */
+
+.booth-capture-page .booth-controls-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  min-width: 0;
+  gap: 15px;
+}
+
+.booth-capture-page
+.booth-controls .booth-shutter {
+  position: relative;
+
+  display: grid;
+  place-items: center;
+  flex: none;
+
+  width: 108px;
+  height: 108px;
+  min-width: 108px;
+  min-height: 108px;
+  padding: 0;
+
+  overflow: visible;
+
+  border: 1px solid #d9d9de;
+  border-radius: 50%;
+
+  background: #e9e9ed;
+  color: #45454b;
+
+  box-shadow:
+    inset 0 1px 1px #ffffff,
+    inset 0 -2px 3px rgb(30 30 40 / 5%),
+    0 2px 4px rgb(30 30 40 / 7%);
+
+  transform: none;
+
+  transition:
+    background-color .16s ease,
+    box-shadow .16s ease,
+    transform .12s ease;
+}
+
+/* No fake symbols */
+.booth-capture-page .booth-shutter::before,
+.booth-capture-page .booth-shutter::after {
+  content: none;
+  display: none;
+}
+
+.booth-capture-page
+.booth-controls .booth-shutter:hover:not(:disabled) {
+  background: #ececf0;
+  transform: none;
+
+  box-shadow:
+    inset 0 1px 1px #ffffff,
+    inset 0 -2px 3px rgb(30 30 40 / 5%),
+    0 3px 6px rgb(30 30 40 / 9%);
+}
+
+.booth-capture-page
+.booth-controls .booth-shutter:active:not(:disabled) {
+  background: #e2e2e7;
+  transform: translateY(1px);
+
+  box-shadow:
+    inset 0 2px 5px rgb(30 30 40 / 9%),
+    0 1px 2px rgb(30 30 40 / 5%);
+}
+
+.booth-capture-page
+.booth-controls .booth-shutter:disabled {
+  opacity: .72;
+  filter: none;
+  cursor: not-allowed;
+}
+
+/* White central shutter button */
+.booth-capture-page .booth-camera-icon {
+  position: relative;
+  z-index: 1;
+
+  display: block;
+
+  width: 41px;
+  height: 41px;
+  padding: 9px;
+
+  border: 1px solid #d8d8dd;
+  border-radius: 50%;
+
+  background: #ffffff;
+  color: #505057;
+
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+
+  box-shadow:
+    inset 0 1px 1px #ffffff,
+    0 1px 2px rgb(30 30 40 / 7%);
+
+  pointer-events: none;
+}
+
+/* ========================================
+   SECONDARY ACTIONS
+   ======================================== */
+
+.booth-capture-page
+.booth-controls .booth-next-button,
+.booth-capture-page
+.booth-controls .booth-cancel-retake {
+  width: min(100%, 150px);
+  min-height: 39px;
+  padding: 9px 14px;
+
+  border: 1px solid #d6d6db;
+  border-radius: 999px;
+
+  background: #ffffff;
+  color: #1d1d1f;
+
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+
+  box-shadow: none;
+}
+
+.booth-capture-page
+.booth-controls .booth-next-button:hover:not(:disabled),
+.booth-capture-page
+.booth-controls .booth-cancel-retake:hover:not(:disabled) {
+  background: #f5f5f7;
+  border-color: #c4c4c9;
+}
+
+.booth-capture-page
+.booth-controls .booth-reset {
+  width: auto;
+  min-height: 32px;
+  padding: 5px 9px;
+
+  border: 0;
+  border-radius: 6px;
+
+  background: transparent;
+  color: #86868b;
+
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+
+  box-shadow: none;
+}
+
+.booth-capture-page
+.booth-controls .booth-reset:hover:not(:disabled) {
+  border: 0;
+  background: transparent;
+  color: #1d1d1f;
+
+  box-shadow: none;
+  transform: none;
+}
+
+.booth-capture-page .inline-error {
+  max-width: 165px;
+  text-align: center;
+}
+
+/* ========================================
+   PHOTO PREVIEWS
+   ======================================== */
+
+.booth-capture-page .booth-gallery {
+  position: relative;
+  z-index: 1;
+  grid-area: gallery;
+
+  display: grid;
+  align-items: center;
+
+  width: 100%;
+  height: auto;
+  min-width: 0;
+  min-height: 0;
+
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+
+  background: transparent;
+  box-shadow: none;
+}
+
+.booth-capture-page .booth-shots-row {
+  display: grid;
+
+  width: 100%;
+  height: auto;
+  min-height: 0;
+
+  gap: 12px;
+  align-items: center;
+  justify-items: center;
+}
+
+/* Smaller, lighter photo slots */
+.booth-capture-page
+.booth-shots-row .shot-thumb {
+  position: relative;
+
+  display: grid;
+  place-items: center;
+
+  width: min(100%, 146px);
+  max-width: 100%;
+  height: auto;
+  min-height: 0;
+
+  aspect-ratio: 1088 / 658;
+
+  padding: 0;
+  overflow: hidden;
+
+  border: 1px solid #e6e6ea;
+  border-radius: 10px;
+
+  background: #f6f6f8;
+  box-shadow: none;
+
+  transition:
+    border-color .18s ease,
+    box-shadow .18s ease,
+    background-color .18s ease;
+}
+
+.booth-capture-page
+.booth-shots-row .shot-thumb img {
+  position: absolute;
+  inset: 0;
+
+  display: block;
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+  object-position: center;
+}
+
+/* Minimal numbering */
+.booth-capture-page
+.booth-shots-row .shot-thumb-number {
+  color: #a1a1a6;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.booth-capture-page
+.booth-shots-row .shot-thumb-filled {
+  border-color: #d8d8dd;
+  background: #ffffff;
+}
+
+.booth-capture-page
+.booth-shots-row .shot-thumb-selected {
+  border-color: #1d1d1f;
+
+  box-shadow:
+    0 0 0 1px #1d1d1f;
+}
+
+.booth-capture-page
+.booth-shots-row .shot-retake-indicator {
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+
+  background: rgb(255 255 255 / 93%);
+  color: #1d1d1f;
+
+  border: 0;
+  border-radius: 999px;
+
+  box-shadow:
+    0 1px 3px rgb(0 0 0 / 9%);
+}
+
+/* Small, satisfying photo arrival */
+.booth-capture-page
+.booth-shots-row .shot-thumb-new {
+  animation: digicam-photo-appear .3s ease-out both;
+}
+
+@keyframes digicam-photo-appear {
+  from {
+    opacity: .75;
+    transform: scale(.975);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ========================================
+   ACCESSIBILITY
+   ======================================== */
+
+.booth-capture-page button:focus-visible {
+  outline: 2px solid #1d1d1f;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .booth-capture-page .booth-shutter,
+  .booth-capture-page .shot-thumb,
+  .digicam-timer-button {
+    transition: none;
+  }
+
+  .booth-capture-page
+  .booth-shots-row .shot-thumb-new {
+    animation: none;
+  }
+}
+
+/* ========================================
+   TABLET AND MOBILE
+   ======================================== */
+
+@media (max-width: 820px) {
+  .booth-capture-page .booth-page {
+    padding: 15px 10px;
+  }
+
+  .booth-capture-page .booth-session {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    grid-template-areas:
+      "camera"
+      "controls"
+      "gallery";
+
+    gap: 15px;
+
+    width: min(100%, 580px);
+    height: auto;
+    max-height: none;
+
+    padding: 48px 14px 18px;
+    border-radius: 24px;
+  }
+
+  .digicam-engraving {
+    top: 15px;
+    left: 21px;
+  }
+
+  .booth-capture-page .booth-camera-frame {
+    height: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 11px;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  /* Match the slim silver LCD outline on mobile */
+  .booth-capture-page
+  .booth-camera-frame .camera-window {
+    width: 100%;
+    height: auto;
+
+    aspect-ratio: 1088 / 658;
+    border: 2px solid #c7c7cc;
+    border-radius: 11px;
+  }
+
+  .booth-capture-page .booth-controls {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+
+    width: 100%;
+    height: auto;
+
+    gap: 10px;
+    padding: 5px 2px;
+  }
+
+  .booth-capture-page .booth-controls-top {
+    align-items: flex-start;
+    gap: 13px;
+
+    width: auto;
+    flex: 1;
+    min-width: 0;
+
+    text-align: left;
+  }
+
+  .booth-capture-page .booth-progress {
+    font-size: 14px;
+    text-align: left;
+  }
+
+  .digicam-timer {
+    align-items: flex-start;
+    gap: 7px;
+  }
+
+  .digicam-timer-button {
+    min-width: 34px;
+    height: 31px;
+    min-height: 31px;
+    padding: 0 7px;
+  }
+
+  .booth-capture-page .booth-controls-bottom {
+    width: auto;
+    flex: none;
+    gap: 8px;
+  }
+
+  .booth-capture-page
+  .booth-controls .booth-shutter {
+    width: 78px;
+    height: 78px;
+    min-width: 78px;
+    min-height: 78px;
+  }
+
+  .booth-capture-page .booth-camera-icon {
+    width: 34px;
+    height: 34px;
+    padding: 7px;
+  }
+
+  .booth-capture-page
+  .booth-controls .booth-next-button,
+  .booth-capture-page
+  .booth-controls .booth-cancel-retake {
+    width: auto;
+    max-width: 130px;
+    min-height: 35px;
+    padding: 7px 10px;
+    font-size: 11px;
+  }
+
+  .booth-capture-page .booth-shots-row {
+    gap: 7px;
+  }
+
+  .booth-capture-page
+  .booth-shots-row .shot-thumb {
+    width: 100%;
+    border-radius: 7px;
+  }
+}
+
+@media (max-width: 380px) {
+  .booth-capture-page .booth-session {
+    padding-inline: 10px;
+  }
+
+  .booth-capture-page .booth-controls {
+    gap: 6px;
+  }
+
+  .digicam-timer-button {
+    min-width: 32px;
+    padding-inline: 6px;
+    font-size: 10px;
+  }
+
+  .booth-capture-page
+  .booth-controls .booth-shutter {
+    width: 70px;
+    height: 70px;
+    min-width: 70px;
+    min-height: 70px;
+  }
+}
