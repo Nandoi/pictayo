@@ -1,11 +1,27 @@
+
 import { useEffect, useRef, useState } from 'react'
+import type { CSSProperties } from 'react'
 import { CameraPreview } from '../camera/CameraPreview'
 import { capturePhoto } from '../camera/camera'
 import { useCamera } from '../camera/useCamera'
-import { drawStripFooter, downloadStrip, PHOTO_COUNT, STRIP_HEIGHT, STRIP_WIDTH, THEMES } from './strip'
-import type { PhotoSlots, StripTheme } from './strip'
+import {
+  drawStripFooter,
+  downloadStrip,
+  PHOTO_COUNT,
+  PHOTO_LAYOUTS,
+  THEMES,
+} from './strip'
+import type {
+  PhotoLayout,
+  PhotoLayoutId,
+  PhotoRect,
+  PhotoSlots,
+  StripTheme,
+} from './strip'
 import './capture-feedback.css'
 import './restart-confirmation.css'
+import './download-feedback.css'
+import './photo-layouts.css'
 
 const COUNTDOWN_SECONDS = 3
 const FLASH_DURATION = 750
@@ -14,8 +30,86 @@ const SAVED_FEEDBACK_DURATION = 1800
 const sleep = (ms: number) =>
   new Promise<void>((resolve) => window.setTimeout(resolve, ms))
 
+function photoRectStyle(
+  layout: PhotoLayout,
+  rect: PhotoRect,
+): CSSProperties {
+  return {
+    position: 'absolute',
+    left: `${(rect.x / layout.width) * 100}%`,
+    top: `${(rect.y / layout.height) * 100}%`,
+    width: `${(rect.width / layout.width) * 100}%`,
+    height: `${(rect.height / layout.height) * 100}%`,
+  }
+}
+
+
+function LayoutPicker({
+  onSelect,
+}: {
+  onSelect: (id: PhotoLayoutId) => void
+}) {
+  return (
+    <section
+      className="layout-picker-page"
+      aria-labelledby="layout-picker-title"
+    >
+      <div className="layout-picker-header">
+        <h1 id="layout-picker-title">
+          Choose Layout
+        </h1>
+      </div>
+
+      <div
+        className="layout-picker-grid"
+        role="group"
+        aria-label="Choose a photo layout"
+      >
+        {PHOTO_LAYOUTS.map((option) => (
+          <button
+            key={option.id}
+            type="button"
+            className="layout-picker-card"
+            onClick={() => onSelect(option.id)}
+            aria-label={`${option.name} layout. Continue to camera.`}
+          >
+            <span
+              className="layout-picker-illustration"
+              aria-hidden="true"
+            >
+              <span
+                className="layout-picker-paper"
+                style={{
+                  width: `min(100%, ${Math.round(
+                    132 * option.width / option.height
+                  )}px)`,
+                  aspectRatio:
+                    `${option.width} / ${option.height}`,
+                }}
+              >
+                {option.slots.map((rect, index) => (
+                  <span
+                    key={index}
+                    className="layout-picker-photo"
+                    style={photoRectStyle(option, rect)}
+                  />
+                ))}
+              </span>
+            </span>
+
+            <span className="layout-picker-card-title">
+              {option.name}
+            </span>
+          </button>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 type CameraSessionProps = {
   photos: PhotoSlots
+  layout: PhotoLayout
   retakeSlot: number | null
   onPhoto: (index: number, dataUrl: string) => void
   onDesign: () => void
@@ -25,6 +119,7 @@ type CameraSessionProps = {
 
 function CameraSession({
   photos,
+  layout,
   retakeSlot,
   onPhoto,
   onDesign,
@@ -36,25 +131,30 @@ function CameraSession({
   const [busy, setBusy] = useState(false)
   const [countdown, setCountdown] =
     useState<number | 'flash' | null>(null)
-  const [currentShot, setCurrentShot] = useState<number | null>(null)
-  const [captureError, setCaptureError] = useState<string | null>(null)
-  const [selectedRetake, setSelectedRetake] = useState<number | null>(null)
-  const [savedPhoto, setSavedPhoto] = useState<number | null>(null)
-  const [freshPhoto, setFreshPhoto] = useState<number | null>(null)
+  const [currentShot, setCurrentShot] =
+    useState<number | null>(null)
+  const [captureError, setCaptureError] =
+    useState<string | null>(null)
+  const [selectedRetake, setSelectedRetake] =
+    useState<number | null>(null)
+  const [savedPhoto, setSavedPhoto] =
+    useState<number | null>(null)
+  const [freshPhoto, setFreshPhoto] =
+    useState<number | null>(null)
+
   const runId = useRef(0)
   const feedbackTimer = useRef<number | null>(null)
   const capturing = useRef(false)
 
-  const completed = photos.every(Boolean)
-  const remaining = photos.filter((photo) => !photo).length
-  const taken = PHOTO_COUNT - remaining
+  const completed =
+    photos.length === layout.count && photos.every(Boolean)
+  const taken = photos.filter(Boolean).length
   const nextShot = photos.findIndex((photo) => photo === null)
-  // A selection never starts the camera countdown by itself.
   const selectedPhoto = retakeSlot ?? selectedRetake
-  const activePhoto = selectedPhoto ?? nextShot
 
   useEffect(() => () => {
     runId.current += 1
+
     if (feedbackTimer.current !== null) {
       window.clearTimeout(feedbackTimer.current)
     }
@@ -65,6 +165,7 @@ function CameraSession({
       window.clearTimeout(feedbackTimer.current)
       feedbackTimer.current = null
     }
+
     setSavedPhoto(null)
     setFreshPhoto(null)
   }
@@ -76,58 +177,87 @@ function CameraSession({
   }
 
   function selectRetake(index: number) {
-    if (capturing.current || busy || retakeSlot !== null || !photos[index]) return
+    if (
+      capturing.current ||
+      busy ||
+      retakeSlot !== null ||
+      !photos[index]
+    ) return
+
     clearFeedback()
     setCaptureError(null)
-    setSelectedRetake((previous) => previous === index ? null : index)
+
+    setSelectedRetake((previous) =>
+      previous === index ? null : index
+    )
   }
 
   function cancelRetake() {
     if (capturing.current || busy) return
+
     clearFeedback()
     setCaptureError(null)
+
     if (retakeSlot !== null) {
-      onCancelRetake() // Return to the review screen with the original photo.
+      onCancelRetake()
     } else {
       setSelectedRetake(null)
     }
   }
 
-  async function takeShot(index: number, finishAfter = false) {
-    if (capturing.current || busy || loading || error || !ready || index < 0) return
+  async function takeShot(
+    index: number,
+    finishAfter = false
+  ) {
+    if (
+      capturing.current ||
+      busy ||
+      loading ||
+      error ||
+      !ready ||
+      index < 0
+    ) return
 
     const video = videoRef.current
     if (!video) return
 
     const id = ++runId.current
     capturing.current = true
+
     clearFeedback()
     setBusy(true)
     setCurrentShot(index)
     setCaptureError(null)
 
     try {
-      for (let second = COUNTDOWN_SECONDS; second >= 1; second--) {
+      for (
+        let second = COUNTDOWN_SECONDS;
+        second >= 1;
+        second--
+      ) {
         setCountdown(second)
         await sleep(1000)
+
         if (runId.current !== id) return
       }
 
-      // Capture exactly one frame, then briefly flash the camera.
       const image = capturePhoto(video)
       onPhoto(index, image)
       setFreshPhoto(index)
+
       setCountdown('flash')
       await sleep(FLASH_DURATION)
+
       if (runId.current !== id) return
+
       setCountdown(null)
       setSelectedRetake(null)
 
-      // Feedback disappears automatically, but the next shot never starts on its own.
       if (finishAfter) {
         onDesign()
       } else {
         setSavedPhoto(index)
+
         feedbackTimer.current = window.setTimeout(() => {
           setSavedPhoto(null)
           setFreshPhoto(null)
@@ -137,7 +267,9 @@ function CameraSession({
     } catch (cause) {
       if (runId.current === id) {
         setCaptureError(
-          cause instanceof Error ? cause.message : 'Could not capture photo.'
+          cause instanceof Error
+            ? cause.message
+            : 'Could not capture photo.'
         )
       }
     } finally {
@@ -161,7 +293,10 @@ function CameraSession({
   }
 
   return (
-    <section className="booth-session" aria-label="Photobooth capture">
+    <section
+      className="booth-session"
+      aria-label="Photobooth capture"
+    >
       <div className="booth-camera-frame">
         <CameraPreview
           videoRef={videoRef}
@@ -174,19 +309,36 @@ function CameraSession({
           onReady={() => setReady(true)}
           countdown={countdown}
         />
+
         {savedPhoto !== null && (
-          <div className="booth-saved-feedback" role="status" aria-live="polite">
-            <span className="booth-saved-check" aria-hidden="true">✓</span>
+          <div
+            className="booth-saved-feedback"
+            role="status"
+            aria-live="polite"
+          >
+            <span
+              className="booth-saved-check"
+              aria-hidden="true"
+            >
+              ✓
+            </span>
             Photo {savedPhoto + 1} saved
           </div>
         )}
       </div>
 
-      <aside className="booth-controls" aria-label="Capture controls">
+      <aside
+        className="booth-controls"
+        aria-label="Capture controls"
+      >
         <div className="booth-controls-top">
-          <div className="booth-progress" aria-live="polite">
-            {taken} of {PHOTO_COUNT} taken
+          <div
+            className="booth-progress"
+            aria-live="polite"
+          >
+            {String(taken).padStart(2, '0')} / {String(layout.count).padStart(2, '0')}
           </div>
+
           <p className="booth-help" aria-live="polite">
             {selectedPhoto !== null
               ? `Photo ${selectedPhoto + 1} selected. Press Retake when you're ready.`
@@ -197,23 +349,40 @@ function CameraSession({
         </div>
 
         <div className="booth-controls-bottom">
-          <button
-            type="button"
-            className="button button-primary booth-shutter"
-            onClick={handleCapture}
-            disabled={
-              busy || loading || !ready || Boolean(error) ||
-              (completed && selectedPhoto === null)
-            }
-          >
-            {busy
-              ? `Capturing photo ${(currentShot ?? 0) + 1}...`
-              : selectedPhoto !== null
-                ? `Retake photo ${selectedPhoto + 1}`
-                : completed
-                  ? 'All photos taken'
-                  : `Take photo ${activePhoto + 1}`}
-          </button>
+          {(!completed || selectedPhoto !== null) && (
+            <button
+              type="button"
+              className="button button-primary booth-shutter"
+              onClick={handleCapture}
+              disabled={
+                busy ||
+                loading ||
+                !ready ||
+                Boolean(error)
+              }
+              aria-label={
+                busy
+                  ? `Capturing photo ${(currentShot ?? 0) + 1}`
+                  : selectedPhoto !== null
+                    ? `Retake photo ${selectedPhoto + 1}`
+                    : `Take photo ${nextShot + 1}`
+              }
+              title={
+                selectedPhoto !== null
+                  ? `Retake photo ${selectedPhoto + 1}`
+                  : `Take photo ${nextShot + 1}`
+              }
+            >
+              <svg
+                className="booth-camera-icon"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z" />
+                <circle cx="12" cy="13" r="3.5" />
+              </svg>
+            </button>
+          )}
 
           {selectedPhoto !== null && (
             <button
@@ -238,7 +407,9 @@ function CameraSession({
           )}
 
           {captureError && (
-            <p className="inline-error" role="alert">{captureError}</p>
+            <p className="inline-error" role="alert">
+              {captureError}
+            </p>
           )}
 
           <button
@@ -252,57 +423,148 @@ function CameraSession({
         </div>
       </aside>
 
-      <div className="booth-gallery" aria-label="Captured photos">
-        <div className="shots-row booth-shots-row">
-          {Array.from({ length: PHOTO_COUNT }, (_, index) => (
-            <button
-              key={index}
-              type="button"
-              className={`shot-thumb ${
-                photos[index] ? 'shot-thumb-filled' : ''
-              } ${currentShot === index ? 'shot-thumb-active' : ''} ${
-                selectedPhoto === index ? 'shot-thumb-selected' : ''
-              } ${freshPhoto === index ? 'shot-thumb-new' : ''}`}
-              disabled={
-                !photos[index] || busy || loading || Boolean(error) ||
-                !ready || retakeSlot !== null
-              }
-              onClick={() => selectRetake(index)}
-              aria-pressed={photos[index] ? selectedPhoto === index : undefined}
-              aria-label={photos[index]
-                ? selectedPhoto === index
-                  ? `Photo ${index + 1} selected for retake`
-                  : `Select photo ${index + 1} to retake`
-                : `Photo ${index + 1} not taken`}
-              title={photos[index]
-                ? selectedPhoto === index
-                  ? `Photo ${index + 1} selected. Press Retake photo ${index + 1} to capture.`
-                  : `Select photo ${index + 1} to retake`
-                : `Photo ${index + 1} not taken`}
-            >
-              {photos[index] ? (
-                <img src={photos[index]} alt={`Photo ${index + 1}`} />
-              ) : (
-                <span className="shot-thumb-number">0{index + 1}</span>
-              )}
-              {photos[index] && (
-                <span className="shot-retake-indicator" aria-hidden="true">
-                  <span className="booth-retake-symbol">↻</span>
-                  <span className="booth-retake-text">
-                    {selectedPhoto === index ? 'Selected' : 'Retake'}
+      <div
+        className="booth-gallery"
+        aria-label="Captured photos"
+      >
+        <div
+          className="shots-row booth-shots-row"
+          style={{
+            gridTemplateColumns:
+              `repeat(${layout.count}, minmax(0, 1fr))`,
+          }}
+        >
+          {Array.from(
+            { length: layout.count },
+            (_, index) => (
+              <button
+                key={index}
+                type="button"
+                className={`shot-thumb ${
+                  photos[index]
+                    ? 'shot-thumb-filled'
+                    : ''
+                } ${
+                  currentShot === index
+                    ? 'shot-thumb-active'
+                    : ''
+                } ${
+                  selectedPhoto === index
+                    ? 'shot-thumb-selected'
+                    : ''
+                } ${
+                  freshPhoto === index
+                    ? 'shot-thumb-new'
+                    : ''
+                }`}
+                disabled={
+                  !photos[index] ||
+                  busy ||
+                  loading ||
+                  Boolean(error) ||
+                  !ready ||
+                  retakeSlot !== null
+                }
+                onClick={() => selectRetake(index)}
+                aria-pressed={
+                  photos[index]
+                    ? selectedPhoto === index
+                    : undefined
+                }
+                aria-label={
+                  photos[index]
+                    ? selectedPhoto === index
+                      ? `Photo ${index + 1} selected for retake`
+                      : `Select photo ${index + 1} to retake`
+                    : `Photo ${index + 1} not taken`
+                }
+              >
+                {photos[index] ? (
+                  <img
+                    src={photos[index]}
+                    alt={`Photo ${index + 1}`}
+                  />
+                ) : (
+                  <span className="shot-thumb-number">
+                    0{index + 1}
                   </span>
-                </span>
-              )}
-            </button>
-          ))}
+                )}
+
+                {photos[index] && (
+                  <span
+                    className="shot-retake-indicator"
+                    aria-hidden="true"
+                  >
+                    <span className="booth-retake-symbol">
+                      ↻
+                    </span>
+                    <span className="booth-retake-text">
+                      {selectedPhoto === index
+                        ? 'Selected'
+                        : 'Retake'}
+                    </span>
+                  </span>
+                )}
+              </button>
+            )
+          )}
         </div>
       </div>
     </section>
   )
 }
 
+/** Shared positioning for the preview and theme thumbnails */
+function LayoutPhotos({
+  photos,
+  layout,
+  mini = false,
+}: {
+  photos: PhotoSlots
+  layout: PhotoLayout
+  mini?: boolean
+}) {
+  return (
+    <div
+      className={
+        mini
+          ? 'layout-mini-slots'
+          : 'layout-strip-slots'
+      }
+    >
+      {layout.slots.map((rect, index) => (
+        <div
+          key={index}
+          className={
+            mini
+              ? 'layout-mini-slot'
+              : 'layout-strip-slot'
+          }
+          style={photoRectStyle(layout, rect)}
+        >
+          {photos[index] ? (
+            <img
+              src={photos[index]}
+              alt={
+                mini
+                  ? ''
+                  : `Strip photo ${index + 1}`
+              }
+            />
+          ) : !mini ? (
+            <span className="strip-empty">
+              0{index + 1}
+            </span>
+          ) : null}
+        </div>
+      ))}
+    </div>
+  )
+}
+
 type StripPreviewProps = {
   photos: PhotoSlots
+  layout: PhotoLayout
   theme: StripTheme
   caption: string
   showDate: boolean
@@ -311,6 +573,7 @@ type StripPreviewProps = {
 
 function StripPreview({
   photos,
+  layout,
   theme,
   caption,
   showDate,
@@ -318,66 +581,107 @@ function StripPreview({
 }: StripPreviewProps) {
   const footerCanvasRef = useRef<HTMLCanvasElement>(null)
 
-  // The preview's text is painted with exactly the same coordinates and
-  // font-measuring logic as the downloaded PNG; only the canvas is scaled.
   useEffect(() => {
     const canvas = footerCanvasRef.current
     const ctx = canvas?.getContext('2d')
+
     if (!ctx) return
 
-    ctx.clearRect(0, 0, STRIP_WIDTH, STRIP_HEIGHT)
-    drawStripFooter(ctx, theme, caption, showDate, createdAt)
-  }, [theme, caption, showDate, createdAt])
+    ctx.clearRect(
+      0,
+      0,
+      layout.width,
+      layout.height,
+    )
+
+    drawStripFooter(
+      ctx,
+      theme,
+      caption,
+      showDate,
+      createdAt,
+      layout,
+    )
+  }, [layout, theme, caption, showDate, createdAt])
 
   return (
     <div
       className="strip"
-      style={{ backgroundColor: theme.background, color: theme.ink }}
-      aria-label="Photo strip preview"
+      style={{
+        backgroundColor: theme.background,
+        color: theme.ink,
+        aspectRatio:
+          `${layout.width} / ${layout.height}`,
+      }}
+      aria-label={`${layout.name} photo preview`}
     >
-      <div className="strip-frames">
-        {Array.from({ length: PHOTO_COUNT }, (_, index) => (
-          <div key={index} className="strip-frame">
-            {photos[index] ? (
-              <img src={photos[index]} alt={`Strip photo ${index + 1}`} />
-            ) : (
-              <div className="strip-empty"><span>0{index + 1}</span></div>
-            )}
-          </div>
-        ))}
-      </div>
+      <LayoutPhotos
+        photos={photos}
+        layout={layout}
+      />
+
       <canvas
         ref={footerCanvasRef}
         className="strip-text-layer"
-        width={STRIP_WIDTH}
-        height={STRIP_HEIGHT}
+        width={layout.width}
+        height={layout.height}
         aria-hidden="true"
       />
     </div>
   )
 }
 
-type ReviewProps = {
+function PhotoReview({
+  photos,
+  onRetake,
+  onReset,
+  saving,
+}: {
   photos: PhotoSlots
   onRetake: (slot: number) => void
   onReset: () => void
   saving: boolean
-}
-
-function PhotoReview({ photos, onRetake, onReset, saving }: ReviewProps) {
+}) {
   return (
-    <section className="studio-card" aria-label="Photo review">
+    <section
+      className="studio-card"
+      aria-label="Photo review"
+    >
       <div className="review-grid">
         {photos.map((photo, index) => (
-          <div className="review-photo" key={index}>
-            {photo && <img src={photo} alt={`Photo ${index + 1}`} />}
-            <span className="review-photo-index">0{index + 1}</span>
-            <button type="button" onClick={() => onRetake(index)} disabled={saving}>Retake</button>
+          <div
+            className="review-photo"
+            key={index}
+          >
+            {photo && (
+              <img
+                src={photo}
+                alt={`Photo ${index + 1}`}
+              />
+            )}
+
+            <span className="review-photo-index">
+              0{index + 1}
+            </span>
+
+            <button
+              type="button"
+              onClick={() => onRetake(index)}
+              disabled={saving}
+            >
+              Retake
+            </button>
           </div>
         ))}
       </div>
+
       <div className="review-bottom">
-        <button type="button" className="button button-outline" onClick={onReset} disabled={saving}>
+        <button
+          type="button"
+          className="button button-outline"
+          onClick={onReset}
+          disabled={saving}
+        >
           Start over
         </button>
       </div>
@@ -389,18 +693,36 @@ export function Photobooth() {
   const [photos, setPhotos] = useState<PhotoSlots>(
     () => Array(PHOTO_COUNT).fill(null)
   )
-  const [stage, setStage] = useState<'camera' | 'design'>('camera')
-  const [retakeSlot, setRetakeSlot] = useState<number | null>(null)
-  const [themeId, setThemeId] = useState<StripTheme['id']>(THEMES[0].id)
+
+  const [stage, setStage] =
+    useState<'layout' | 'camera' | 'design'>('layout')
+
+  const [layoutId, setLayoutId] =
+    useState<PhotoLayoutId>('4-cut')
+
+  const [retakeSlot, setRetakeSlot] =
+    useState<number | null>(null)
+
+  const [themeId, setThemeId] =
+    useState<StripTheme['id']>(THEMES[0].id)
+
   const [caption, setCaption] = useState('')
   const [showDate, setShowDate] = useState(false)
-  const [createdAt, setCreatedAt] = useState(() => new Date())
-  const [saving, setSaving] = useState(false)
-  const [saveError, setSaveError] = useState<string | null>(null)
+  const [createdAt, setCreatedAt] =
+    useState(() => new Date())
+
+  const [downloadStatus, setDownloadStatus] =
+    useState<
+      'idle' | 'preparing' | 'requested' | 'error'
+    >('idle')
+
+  const [saveError, setSaveError] =
+    useState<string | null>(null)
+
+  const downloadLock = useRef(false)
   const [restartOpen, setRestartOpen] = useState(false)
   const restartDialogRef = useRef<HTMLDialogElement>(null)
 
-  // A native dialog handles focus trapping and Escape for us.
   useEffect(() => {
     const dialog = restartDialogRef.current
     if (!dialog) return
@@ -412,29 +734,65 @@ export function Photobooth() {
     }
   }, [restartOpen])
 
-  const theme = THEMES.find((item) => item.id === themeId) ?? THEMES[0]
-  const complete = photos.length === PHOTO_COUNT && photos.every(Boolean)
+  const theme =
+    THEMES.find((item) => item.id === themeId)
+    ?? THEMES[0]
+
+  const layout =
+    PHOTO_LAYOUTS.find((item) => item.id === layoutId)
+    ?? PHOTO_LAYOUTS[0]
+
+  const complete =
+    photos.length === layout.count
+    && photos.every(Boolean)
+
+  const saving = downloadStatus === 'preparing'
+
+  function clearDownloadFeedback() {
+    setDownloadStatus('idle')
+    setSaveError(null)
+  }
+
+  function chooseLayout(id: PhotoLayoutId) {
+    if (stage !== 'layout') return
+
+    const chosen = PHOTO_LAYOUTS.find(
+      (item) => item.id === id
+    )
+
+    if (!chosen) return
+
+    setLayoutId(chosen.id)
+    setPhotos(Array(chosen.count).fill(null))
+    setRetakeSlot(null)
+    setCreatedAt(new Date())
+    setStage('camera')
+    clearDownloadFeedback()
+  }
 
   function savePhoto(index: number, image: string) {
-    setPhotos((previous) => previous.map((photo, slot) =>
-      slot === index ? image : photo
-    ))
+    setPhotos((previous) =>
+      previous.map((photo, slot) =>
+        slot === index ? image : photo
+      )
+    )
   }
 
   function resetSession() {
+    setLayoutId('4-cut')
     setPhotos(Array(PHOTO_COUNT).fill(null))
     setRetakeSlot(null)
-    setStage('camera')
+    setStage('layout')
     setCreatedAt(new Date())
     setThemeId(THEMES[0].id)
     setCaption('')
     setShowDate(false)
-    setSaveError(null)
+    clearDownloadFeedback()
   }
 
   function requestReset() {
-    // A fresh, empty booth can restart immediately.
     if (saving) return
+
     if (photos.some(Boolean)) {
       setRestartOpen(true)
     } else {
@@ -453,6 +811,7 @@ export function Photobooth() {
   }
 
   function retake(index: number) {
+    clearDownloadFeedback()
     setRetakeSlot(index)
     setStage('camera')
   }
@@ -463,27 +822,54 @@ export function Photobooth() {
   }
 
   async function save() {
-    if (!complete || saving) return
+    if (
+      !complete ||
+      downloadLock.current ||
+      restartOpen
+    ) return
+
+    downloadLock.current = true
     setSaveError(null)
-    setSaving(true)
+    setDownloadStatus('preparing')
 
     try {
-      await downloadStrip(photos, theme, caption, showDate, createdAt)
+      await downloadStrip(
+        photos,
+        theme,
+        caption,
+        showDate,
+        createdAt,
+        layout,
+      )
+
+      setDownloadStatus('requested')
     } catch (cause) {
       setSaveError(
-        cause instanceof Error ? cause.message : 'Could not download the strip.'
+        cause instanceof Error
+          ? cause.message
+          : 'Could not prepare your PNG. Please try again.'
       )
+      setDownloadStatus('error')
     } finally {
-      setSaving(false)
+      downloadLock.current = false
     }
   }
 
   return (
-    <main className={`site-shell ${stage === 'camera' ? 'booth-capture-page' : ''}`}>
-      {stage === 'camera' ? (
+    <main
+      className={`site-shell ${
+        stage === 'camera'
+          ? 'booth-capture-page'
+          : ''
+      }`}
+    >
+      {stage === 'layout' ? (
+        <LayoutPicker onSelect={chooseLayout} />
+      ) : stage === 'camera' ? (
         <div className="booth-page">
           <CameraSession
             photos={photos}
+            layout={layout}
             retakeSlot={retakeSlot}
             onPhoto={savePhoto}
             onDesign={designStrip}
@@ -494,12 +880,21 @@ export function Photobooth() {
       ) : (
         <div className="mx-auto w-full max-w-6xl px-4 py-6 md:py-10">
           <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-            <PhotoReview photos={photos} onRetake={retake} onReset={requestReset} saving={saving} />
+            <PhotoReview
+              photos={photos}
+              onRetake={retake}
+              onReset={requestReset}
+              saving={saving}
+            />
 
-            <aside className="preview-card" aria-label="Photo strip customization">
+            <aside
+              className="preview-card"
+              aria-label="Photo strip customization"
+            >
               <div className="preview-stage">
                 <StripPreview
                   photos={photos}
+                  layout={layout}
                   theme={theme}
                   caption={caption}
                   showDate={showDate}
@@ -508,42 +903,68 @@ export function Photobooth() {
               </div>
 
               <div className="customizer">
+                <span className="field-label">
+                  Background
+                </span>
+
                 <div className="theme-options">
                   {THEMES.map((option) => (
                     <button
                       key={option.id}
                       type="button"
                       className={`theme-option ${
-                        themeId === option.id ? 'theme-option-selected' : ''
+                        themeId === option.id
+                          ? 'theme-option-selected'
+                          : ''
                       }`}
-                      onClick={() => setThemeId(option.id)}
+                      onClick={() => {
+                        setThemeId(option.id)
+                        clearDownloadFeedback()
+                      }}
+                      disabled={saving}
                       aria-pressed={themeId === option.id}
                       title={option.detail}
                     >
-                      <span
+                      <div
                         className="theme-swatch"
-                        style={{ backgroundColor: option.background }}
+                        style={{
+                          backgroundColor:
+                            option.background,
+                          aspectRatio:
+                            `${layout.width} / ${layout.height}`,
+                        }}
                         aria-hidden="true"
                       >
-                        <span className="theme-mini-photos">
-                          {photos.map((photo, index) => (
-                            <span className="theme-mini-photo" key={index}>
-                              {photo && <img src={photo} alt="" />}
-                            </span>
-                          ))}
-                        </span>
+                        <LayoutPhotos
+                          photos={photos}
+                          layout={layout}
+                          mini
+                        />
+                      </div>
+
+                      <span className="theme-name">
+                        {option.name}
                       </span>
-                      <span className="theme-name">{option.name}</span>
                     </button>
                   ))}
                 </div>
 
-                <label className="field-label" htmlFor="strip-caption">Caption</label>
+                <label
+                  className="field-label"
+                  htmlFor="strip-caption"
+                >
+                  Caption
+                </label>
+
                 <input
                   id="strip-caption"
                   className="caption-input"
                   value={caption}
-                  onChange={(event) => setCaption(event.target.value)}
+                  onChange={(event) => {
+                    setCaption(event.target.value)
+                    clearDownloadFeedback()
+                  }}
+                  disabled={saving}
                   maxLength={38}
                   placeholder="Optional"
                 />
@@ -552,7 +973,11 @@ export function Photobooth() {
                   <input
                     type="checkbox"
                     checked={showDate}
-                    onChange={(event) => setShowDate(event.target.checked)}
+                    onChange={(event) => {
+                      setShowDate(event.target.checked)
+                      clearDownloadFeedback()
+                    }}
+                    disabled={saving}
                   />
                   <span>Date</span>
                 </label>
@@ -562,11 +987,61 @@ export function Photobooth() {
                   className="button button-download"
                   onClick={() => void save()}
                   disabled={!complete || saving}
+                  aria-busy={saving}
                 >
-                  {saving ? 'Preparing...' : 'Download'}
+                  <span className="download-button-content">
+                    {saving && (
+                      <span
+                        className="download-spinner"
+                        aria-hidden="true"
+                      />
+                    )}
+
+                    {downloadStatus === 'preparing'
+                      ? 'Preparing PNG…'
+                      : downloadStatus === 'requested'
+                        ? 'Download again'
+                        : downloadStatus === 'error'
+                          ? 'Try download again'
+                          : 'Download PNG'}
+                  </span>
                 </button>
-                {saveError && (
-                  <p className="inline-error" role="alert">{saveError}</p>
+
+                {downloadStatus === 'preparing' && (
+                  <p
+                    className="download-feedback"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    Creating your high-quality photo strip…
+                  </p>
+                )}
+
+                {downloadStatus === 'requested' && (
+                  <p
+                    className="download-feedback download-feedback-requested"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    <span aria-hidden="true">✓ </span>
+                    Download requested. Check your browser's Downloads.
+                  </p>
+                )}
+
+                {downloadStatus === 'error' && (
+                  <div
+                    className="download-feedback download-feedback-error"
+                    role="alert"
+                  >
+                    <strong>
+                      Couldn't prepare your PNG.
+                    </strong>
+                    <span>{saveError}</span>
+                    <span>
+                      Your photos are still here.
+                      Select Try download again.
+                    </span>
+                  </div>
                 )}
               </div>
             </aside>
@@ -584,11 +1059,15 @@ export function Photobooth() {
         onClose={() => setRestartOpen(false)}
       >
         <div className="restart-confirmation-content">
-          <h2 id="restart-confirmation-title">Start over?</h2>
+          <h2 id="restart-confirmation-title">
+            Start over?
+          </h2>
+
           <p id="restart-confirmation-description">
             This will erase your captured photos and reset your strip settings.
             You won't be able to recover the photos afterward.
           </p>
+
           <div className="restart-confirmation-actions">
             <button
               type="button"
@@ -598,6 +1077,7 @@ export function Photobooth() {
             >
               Keep my photos
             </button>
+
             <button
               type="button"
               className="button restart-confirmation-delete"

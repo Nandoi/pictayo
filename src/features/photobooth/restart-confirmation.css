@@ -1,0 +1,74 @@
+
+/* PicTayo V1.2 — Safe restart confirmation */
+
+.restart-confirmation {
+  width: min(92vw, 410px);
+  max-height: min(90dvh, 600px);
+  margin: auto;
+  padding: 0;
+  overflow: auto;
+  border: 1px solid #e8e7e7;
+  border-radius: 22px;
+  background: #ffffff;
+  color: #202020;
+  box-shadow: 0 24px 80px rgb(0 0 0 / 18%);
+}
+
+.restart-confirmation::backdrop {
+  background: rgb(22 22 22 / 52%);
+}
+
+.restart-confirmation-content {
+  padding: clamp(22px, 5vw, 30px);
+}
+
+.restart-confirmation h2 {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -.035em;
+  line-height: 1.25;
+}
+
+.restart-confirmation p {
+  margin: 12px 0 24px;
+  color: #626262;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.restart-confirmation-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 9px;
+}
+
+.restart-confirmation-actions .button {
+  width: 100%;
+  min-height: 44px;
+  padding: 11px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.restart-confirmation-delete {
+  border: 1px solid #202020;
+  background: #202020;
+  color: #fff;
+}
+
+.restart-confirmation-delete:hover {
+  background: #383838;
+}
+
+.restart-confirmation-actions button:focus-visible {
+  outline: 2px solid #202020;
+  outline-offset: 3px;
+}
+
+@media (max-width: 480px) {
+  .restart-confirmation {
+    border-radius: 18px;
+  }
+}

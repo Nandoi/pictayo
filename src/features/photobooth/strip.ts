@@ -1,3 +1,4 @@
+
 import './strip-layout.css'
 
 export const STRIP_WIDTH = 1200
@@ -15,7 +16,76 @@ export type StripTheme = {
   font: string
 }
 
-/** Six minimal background-only photo strip templates. */
+export type PhotoLayoutId = '4-cut' | '3-cut' | '2x2'
+
+export type PhotoRect = {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+export type PhotoLayout = {
+  id: PhotoLayoutId
+  name: string
+  count: number
+  width: number
+  height: number
+  slots: PhotoRect[]
+  captionY: number
+  dateY: number
+}
+
+const FOUR_CUT_SLOTS: PhotoRect[] = Array.from(
+  { length: 4 },
+  (_, index) => ({
+    x: 56,
+    y: 72 + index * (658 + 14),
+    width: 1088,
+    height: 658,
+  }),
+)
+
+const THREE_CUT_SLOTS: PhotoRect[] = FOUR_CUT_SLOTS.slice(0, 3)
+
+export const PHOTO_LAYOUTS: PhotoLayout[] = [
+  {
+    id: '4-cut',
+    name: '4-cut',
+    count: 4,
+    width: STRIP_WIDTH,
+    height: STRIP_HEIGHT,
+    slots: FOUR_CUT_SLOTS,
+    captionY: 2930,
+    dateY: 3080,
+  },
+  {
+    id: '3-cut',
+    name: '3-cut',
+    count: 3,
+    width: STRIP_WIDTH,
+    height: 2400,
+    slots: THREE_CUT_SLOTS,
+    captionY: 2200,
+    dateY: 2320,
+  },
+  {
+    id: '2x2',
+    name: '2×2',
+    count: 4,
+    width: STRIP_WIDTH,
+    height: 1080,
+    slots: [
+      { x: 56, y: 72, width: 537, height: 325 },
+      { x: 607, y: 72, width: 537, height: 325 },
+      { x: 56, y: 411, width: 537, height: 325 },
+      { x: 607, y: 411, width: 537, height: 325 },
+    ],
+    captionY: 880,
+    dateY: 1020,
+  },
+]
+
 export const THEMES: StripTheme[] = [
   {
     id: 'white',
@@ -67,26 +137,23 @@ export const THEMES: StripTheme[] = [
   },
 ]
 
-/**
- * One shared export geometry (in pixels, 1200 x 3200).
- * Matching CSS percentages in strip-layout.css give the same live preview.
- */
-const LAYOUT = {
-  left: 56,
-  top: 72,
-  width: 1088,
-  photoHeight: 658,
-  gap: 14,
-  captionY: 2930,
-  dateY: 3080,
-} as const
-
 export function dateLabel(date: Date = new Date()): string {
   return date.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
   })
+}
+
+function downloadFilename(date: Date = new Date()): string {
+  const pad = (value: number, length = 2) =>
+    String(value).padStart(length, '0')
+
+  return (
+    `pictayo-${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}-` +
+    `${pad(date.getHours())}-${pad(date.getMinutes())}-${pad(date.getSeconds())}-` +
+    `${pad(date.getMilliseconds(), 3)}.png`
+  )
 }
 
 function drawCover(
@@ -96,7 +163,11 @@ function drawCover(
   y: number,
   width: number,
   height: number,
-) {
+): void {
+  if (image.naturalWidth <= 0 || image.naturalHeight <= 0) {
+    throw new Error('A captured photo is invalid. Please retake it.')
+  }
+
   const imageAspect = image.naturalWidth / image.naturalHeight
   const targetAspect = width / height
 
@@ -119,9 +190,22 @@ function drawCover(
 function loadPhoto(source: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image()
-    image.onload = () => resolve(image)
-    image.onerror = () =>
-      reject(new Error('One of your photos could not be loaded.'))
+
+    image.onload = () => {
+      if (image.naturalWidth <= 0 || image.naturalHeight <= 0) {
+        reject(new Error('A captured photo is invalid. Please retake it.'))
+        return
+      }
+
+      resolve(image)
+    }
+
+    image.onerror = () => {
+      reject(
+        new Error('A captured photo could not be loaded. Please retake it.'),
+      )
+    }
+
     image.src = source
   })
 }
@@ -129,8 +213,11 @@ function loadPhoto(source: string): Promise<HTMLImageElement> {
 function canvasBlob(canvas: HTMLCanvasElement): Promise<Blob> {
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => {
-      if (blob) resolve(blob)
-      else reject(new Error('Unable to create PNG. Please try again.'))
+      if (blob) {
+        resolve(blob)
+      } else {
+        reject(new Error('Unable to prepare your PNG. Please try again.'))
+      }
     }, 'image/png')
   })
 }
@@ -139,8 +226,9 @@ function drawCaption(
   ctx: CanvasRenderingContext2D,
   caption: string,
   theme: StripTheme,
-) {
-  const maxWidth = 1050
+  layout: PhotoLayout,
+): void {
+  const maxWidth = layout.width - 150
   let fontSize = 68
 
   while (fontSize > 34) {
@@ -150,40 +238,45 @@ function drawCaption(
   }
 
   ctx.font = `bold ${fontSize}px ${theme.font}`
-  ctx.fillText(caption, STRIP_WIDTH / 2, LAYOUT.captionY, maxWidth)
+  ctx.fillText(
+    caption,
+    layout.width / 2,
+    layout.captionY,
+    maxWidth,
+  )
 }
 
-/**
- * Paint optional footer content at the original 1200 x 3200 coordinates.
- * Both the PNG export and the transparent preview overlay use this function,
- * so long captions, fonts and date baselines cannot drift apart.
- */
+/** Use the same footer painter for the preview and downloaded PNG. */
 export function drawStripFooter(
   ctx: CanvasRenderingContext2D,
   theme: StripTheme,
   caption: string,
   showDate: boolean,
   createdAt: Date,
+  layout: PhotoLayout = PHOTO_LAYOUTS[0],
 ): void {
   ctx.save()
-  ctx.fillStyle = theme.ink
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'alphabetic'
 
-  if (caption.trim()) {
-    drawCaption(ctx, caption.trim(), theme)
+  try {
+    ctx.fillStyle = theme.ink
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'alphabetic'
+
+    if (caption.trim()) {
+      drawCaption(ctx, caption.trim(), theme, layout)
+    }
+
+    if (showDate) {
+      ctx.font = '30px Arial, sans-serif'
+      ctx.fillText(
+        dateLabel(createdAt).toUpperCase(),
+        layout.width / 2,
+        layout.dateY,
+      )
+    }
+  } finally {
+    ctx.restore()
   }
-
-  if (showDate) {
-    ctx.font = '30px Arial, sans-serif'
-    ctx.fillText(
-      dateLabel(createdAt).toUpperCase(),
-      STRIP_WIDTH / 2,
-      LAYOUT.dateY,
-    )
-  }
-
-  ctx.restore()
 }
 
 export async function renderStrip(
@@ -192,40 +285,49 @@ export async function renderStrip(
   caption: string,
   showDate: boolean,
   createdAt: Date,
+  layout: PhotoLayout = PHOTO_LAYOUTS[0],
 ): Promise<Blob> {
-  if (photos.length !== PHOTO_COUNT || photos.some((photo) => !photo)) {
-    throw new Error('Take all four photos before downloading.')
+  if (
+    photos.length !== layout.count ||
+    photos.some((photo) => !photo)
+  ) {
+    throw new Error(
+      `Take all ${layout.count} photos before downloading.`,
+    )
   }
 
-  const images = await Promise.all(photos.map((source) => loadPhoto(source!)))
+  const images = await Promise.all(
+    photos.map((source) => {
+      if (!source) throw new Error('A captured photo is missing.')
+      return loadPhoto(source)
+    }),
+  )
+
   const canvas = document.createElement('canvas')
-  canvas.width = STRIP_WIDTH
-  canvas.height = STRIP_HEIGHT
+  canvas.width = layout.width
+  canvas.height = layout.height
 
   const ctx = canvas.getContext('2d')
+
   if (!ctx) {
     throw new Error('Canvas export is not available in this browser.')
   }
 
-  // Only the strip background is colored. Photos have no mat or border.
   ctx.fillStyle = theme.background
-  ctx.fillRect(0, 0, STRIP_WIDTH, STRIP_HEIGHT)
+  ctx.fillRect(0, 0, layout.width, layout.height)
 
-  for (let index = 0; index < PHOTO_COUNT; index++) {
-    const y = LAYOUT.top + index * (LAYOUT.photoHeight + LAYOUT.gap)
+  layout.slots.forEach((slot, index) => {
     drawCover(
       ctx,
       images[index],
-      LAYOUT.left,
-      y,
-      LAYOUT.width,
-      LAYOUT.photoHeight,
+      slot.x,
+      slot.y,
+      slot.width,
+      slot.height,
     )
-  }
+  })
 
-  // The same painter is used for the exported PNG and its live preview.
-  drawStripFooter(ctx, theme, caption, showDate, createdAt)
-
+  drawStripFooter(ctx, theme, caption, showDate, createdAt, layout)
   return canvasBlob(canvas)
 }
 
@@ -235,14 +337,36 @@ export async function downloadStrip(
   caption: string,
   showDate: boolean,
   createdAt: Date,
+  layout: PhotoLayout = PHOTO_LAYOUTS[0],
 ): Promise<void> {
-  const blob = await renderStrip(photos, theme, caption, showDate, createdAt)
+  const blob = await renderStrip(
+    photos,
+    theme,
+    caption,
+    showDate,
+    createdAt,
+    layout,
+  )
+
   const url = URL.createObjectURL(blob)
   const anchor = document.createElement('a')
-  anchor.href = url
-  anchor.download = `pictayo-${new Date().toISOString().slice(0, 10)}.png`
-  document.body.appendChild(anchor)
-  anchor.click()
-  anchor.remove()
-  window.setTimeout(() => URL.revokeObjectURL(url), 30_000)
+  let requested = false
+
+  try {
+    anchor.href = url
+    anchor.download = downloadFilename()
+
+    document.body.appendChild(anchor)
+    anchor.click()
+
+    requested = true
+  } finally {
+    anchor.remove()
+
+    if (requested) {
+      window.setTimeout(() => URL.revokeObjectURL(url), 30_000)
+    } else {
+      URL.revokeObjectURL(url)
+    }
+  }
 }

@@ -1,0 +1,62 @@
+
+/* PicTayo V1.2 — Download feedback */
+
+.download-button-content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.download-spinner {
+  display: inline-block;
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgb(255 255 255 / 40%);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: pictayo-download-spin 750ms linear infinite;
+}
+
+@keyframes pictayo-download-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.download-feedback {
+  margin: 11px 0 0;
+  padding: 11px 13px;
+  border: 1px solid #e7e7e7;
+  border-radius: 12px;
+  background: #f8f8f8;
+  color: #626262;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.download-feedback-requested {
+  border-color: #d9e5d7;
+  background: #f5faf5;
+  color: #345139;
+}
+
+.download-feedback-error {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-color: #e9c9cf;
+  background: #fff8f9;
+  color: #813d4d;
+}
+
+.download-feedback-error strong {
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .download-spinner {
+    animation: none;
+  }
+}
