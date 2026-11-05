@@ -1,6 +1,10 @@
 
 /** Browser camera operations. No React dependencies. */
 
+// Must match the per-photo area in photobooth/strip.ts.
+export const CAPTURE_WIDTH = 1088
+export const CAPTURE_HEIGHT = 658
+
 export async function startCamera(): Promise<MediaStream> {
   if (!navigator.mediaDevices?.getUserMedia) {
     throw new Error(
@@ -63,7 +67,12 @@ export function stopCamera(stream: MediaStream): void {
   }
 }
 
-/** Mirrors the saved picture, matching the mirrored on-screen selfie preview. */
+/**
+ * Capture the same composition shown by the camera viewfinder.
+ *
+ * Different cameras may return 16:9, 4:3, or portrait video.
+ * We center-crop that video to the strip photo ratio before saving.
+ */
 export function capturePhoto(video: HTMLVideoElement): string {
   if (
     video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA ||
@@ -73,10 +82,28 @@ export function capturePhoto(video: HTMLVideoElement): string {
     throw new Error('Camera is not ready. Please wait a moment.')
   }
 
-  const canvas = document.createElement('canvas')
+  const sourceWidth = video.videoWidth
+  const sourceHeight = video.videoHeight
+  const targetRatio = CAPTURE_WIDTH / CAPTURE_HEIGHT
 
-  canvas.width = video.videoWidth
-  canvas.height = video.videoHeight
+  let cropWidth = sourceWidth
+  let cropHeight = sourceHeight
+  let cropX = 0
+  let cropY = 0
+
+  if (sourceWidth / sourceHeight > targetRatio) {
+    // Wide camera: crop the left and right edges.
+    cropWidth = sourceHeight * targetRatio
+    cropX = (sourceWidth - cropWidth) / 2
+  } else {
+    // Tall camera: crop the top and bottom edges.
+    cropHeight = sourceWidth / targetRatio
+    cropY = (sourceHeight - cropHeight) / 2
+  }
+
+  const canvas = document.createElement('canvas')
+  canvas.width = CAPTURE_WIDTH
+  canvas.height = CAPTURE_HEIGHT
 
   const context = canvas.getContext('2d')
 
@@ -84,15 +111,20 @@ export function capturePhoto(video: HTMLVideoElement): string {
     throw new Error('Your browser could not capture the photo.')
   }
 
-  context.translate(canvas.width, 0)
+  // Mirror the image to match the live selfie preview.
+  context.translate(CAPTURE_WIDTH, 0)
   context.scale(-1, 1)
 
   context.drawImage(
     video,
+    cropX,
+    cropY,
+    cropWidth,
+    cropHeight,
     0,
     0,
-    canvas.width,
-    canvas.height
+    CAPTURE_WIDTH,
+    CAPTURE_HEIGHT,
   )
 
   return canvas.toDataURL('image/jpeg', 0.92)
