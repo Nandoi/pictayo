@@ -1,0 +1,620 @@
+
+/*
+ * PicTayo — Vintage Digital Camera
+ * Inspired by early-2000s compact digital cameras.
+ * CSS-only styling; camera and capture logic stay unchanged.
+ */
+
+/* The surface around the camera */
+.booth-capture-page {
+  background:
+    radial-gradient(
+      ellipse at 50% 10%,
+      #ffffff 0%,
+      #f3f1ee 68%,
+      #eae7e3 100%
+    );
+}
+
+/* Center the physical camera body */
+.booth-capture-page .booth-page {
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+/* Silver camera body */
+.booth-capture-page .booth-session {
+  position: relative;
+  isolation: isolate;
+
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr) minmax(155px, 205px);
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    "camera controls"
+    "gallery controls";
+
+  align-items: center;
+  gap: 16px 20px;
+
+  width: min(100%, 1080px);
+  height: auto;
+  max-height: none;
+
+  padding: 48px 29px 26px;
+
+  border: 1px solid #a9a8a1;
+  border-radius: 27px;
+
+  background:
+    repeating-linear-gradient(
+      95deg,
+      transparent 0px,
+      rgb(255 255 255 / 5%) 1px,
+      transparent 3px,
+      transparent 7px
+    ),
+    linear-gradient(
+      145deg,
+      #f3f3ef 0%,
+      #d7d8d3 18%,
+      #f5f4ef 40%,
+      #b8b9b5 76%,
+      #d5d6d0 100%
+    );
+
+  box-shadow:
+    inset 0 3px 2px rgb(255 255 255 / 95%),
+    inset 0 -5px 7px rgb(70 70 65 / 15%),
+    inset 2px 0 3px rgb(255 255 255 / 70%),
+    0 7px 2px rgb(80 78 72 / 10%),
+    0 26px 55px rgb(65 60 55 / 16%);
+}
+
+/* Engraved branding at the top-left */
+.booth-capture-page .booth-session::before {
+  content: "Fer <3 Mia";
+  position: absolute;
+  top: 19px;
+  left: 31px;
+
+  color: #686b68;
+  font-family: Arial, sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-shadow: 0 1px 0 rgb(255 255 255 / 90%);
+
+  pointer-events: none;
+}
+
+/* Tiny decorative indicator */
+.booth-capture-page .booth-session::after {
+  content: "";
+  position: absolute;
+  top: 19px;
+  right: 32px;
+
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #bb655b;
+
+  box-shadow:
+    0 0 0 2px #b4b3ae,
+    inset 0 1px 2px rgb(0 0 0 / 25%);
+
+  pointer-events: none;
+}
+
+/* LCD housing — only a slim bezel, not a thick black frame */
+.booth-capture-page .booth-camera-frame {
+  grid-area: camera;
+  container-type: normal;
+
+  display: block;
+  width: 100%;
+  height: auto;
+  min-width: 0;
+  min-height: 0;
+
+  padding: 9px;
+  border: 1px solid #343837;
+  border-radius: 13px;
+
+  background: linear-gradient(
+    145deg,
+    #3c4241 0%,
+    #1c2121 50%,
+    #303533 100%
+  );
+
+  box-shadow:
+    inset 0 2px 5px rgb(0 0 0 / 45%),
+    inset 0 0 0 2px #555a58,
+    0 1px 0 rgb(255 255 255 / 85%),
+    0 4px 7px rgb(0 0 0 / 15%);
+}
+
+/* The actual live LCD image */
+.booth-capture-page
+.booth-camera-frame .camera-window {
+  display: block;
+
+  width: 100%;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  min-height: 0;
+
+  aspect-ratio: 1088 / 658;
+
+  overflow: hidden;
+  border: 1px solid #171b1a;
+  border-radius: 5px;
+  background: #292e2d;
+
+  box-shadow: inset 0 0 5px rgb(0 0 0 / 30%);
+}
+
+/* Preserve the original framing and selfie mirroring */
+.booth-capture-page
+.booth-camera-frame .camera-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+  object-position: center;
+  transform: scaleX(-1);
+}
+
+/* Buttons and LCD controls on the right */
+.booth-capture-page .booth-controls {
+  grid-area: controls;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 23px;
+
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+
+  padding: 8px 4px;
+
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Decorative speaker grille */
+.booth-capture-page .booth-controls::before {
+  content: "";
+  display: block;
+  flex: none;
+
+  width: 77px;
+  height: 20px;
+
+  background-image: radial-gradient(
+    circle,
+    #6b6c69 1.25px,
+    transparent 1.75px
+  );
+  background-size: 8px 8px;
+
+  opacity: .7;
+  filter: drop-shadow(0 1px 0 #fff);
+  pointer-events: none;
+}
+
+/* Engraved marking beneath the buttons */
+.booth-capture-page .booth-controls::after {
+  content: "PHOTO  ·  MODE";
+  color: #757570;
+  font-family: Arial, sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .13em;
+  text-align: center;
+  text-shadow: 0 1px 0 #fff;
+  pointer-events: none;
+}
+
+/* Small camera-style counter */
+.booth-capture-page .booth-controls-top {
+  width: 100%;
+  margin: 0;
+  text-align: center;
+}
+
+.booth-capture-page .booth-progress {
+  color: #444947;
+  font-family: Consolas, monospace;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+
+.booth-capture-page .booth-progress::before {
+  content: "●  PHOTO";
+  display: block;
+  margin-bottom: 5px;
+
+  color: #7f7771;
+  font-family: Arial, sans-serif;
+  font-size: 9px;
+  letter-spacing: .16em;
+}
+
+.booth-capture-page .booth-help {
+  display: none;
+}
+
+/* Button arrangement */
+.booth-capture-page .booth-controls-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+
+  width: 100%;
+  min-width: 0;
+}
+
+/* Metallic shutter ring */
+.booth-capture-page
+.booth-controls .booth-shutter {
+  display: grid;
+  place-items: center;
+  flex: none;
+
+  width: 86px;
+  height: 86px;
+  min-height: 86px;
+  padding: 0;
+
+  border: 7px solid #c0c1bb;
+  border-radius: 50%;
+
+  background: radial-gradient(
+    circle at 35% 25%,
+    #ffffff 0%,
+    #f3f3f0 32%,
+    #d0d2ce 68%,
+    #a8aaa5 100%
+  );
+
+  color: #353936;
+
+  box-shadow:
+    0 0 0 1px #858882,
+    0 3px 0 #8b8c86,
+    0 9px 15px rgb(45 45 42 / 20%),
+    inset 0 2px 3px rgb(255 255 255 / 95%),
+    inset 0 -3px 4px rgb(85 87 82 / 22%);
+
+  transition:
+    transform .15s ease,
+    box-shadow .15s ease;
+}
+
+/* Physical-button hover and pressed states */
+.booth-capture-page
+.booth-controls .booth-shutter:hover:not(:disabled) {
+  background: radial-gradient(
+    circle at 35% 25%,
+    #ffffff 0%,
+    #eeeeeb 45%,
+    #b7b9b4 100%
+  );
+
+  transform: translateY(-1px);
+}
+
+.booth-capture-page
+.booth-controls .booth-shutter:active:not(:disabled) {
+  transform: translateY(3px);
+
+  box-shadow:
+    0 0 0 1px #858882,
+    0 1px 2px rgb(45 45 42 / 18%),
+    inset 0 3px 5px rgb(85 87 82 / 25%);
+}
+
+.booth-capture-page
+.booth-controls .booth-shutter:disabled {
+  opacity: .55;
+}
+
+.booth-camera-icon {
+  width: 32px;
+  height: 32px;
+
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Secondary buttons resemble small physical controls */
+.booth-capture-page .booth-next-button,
+.booth-capture-page .booth-cancel-retake {
+  width: min(100%, 160px);
+  min-height: 39px;
+  padding: 8px 12px;
+
+  border: 1px solid #9fa19c;
+  border-radius: 12px;
+
+  background: linear-gradient(
+    180deg,
+    #f9f9f6,
+    #c7c9c3
+  );
+
+  color: #333936;
+  font-size: 12px;
+  font-weight: 700;
+
+  box-shadow:
+    inset 0 1px 1px #fff,
+    0 3px 0 #969891;
+}
+
+/* Start over stays understated */
+.booth-capture-page .booth-reset {
+  width: auto;
+  min-height: 28px;
+  padding: 4px 9px;
+
+  border: 0;
+  border-radius: 5px;
+
+  background: transparent;
+  color: #626660;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .04em;
+
+  box-shadow: none;
+}
+
+.booth-capture-page
+.booth-controls .booth-reset:hover:not(:disabled) {
+  border: 0;
+  background: transparent;
+  color: #222;
+  box-shadow: none;
+  transform: none;
+}
+
+/* Recessed photo-preview tray */
+.booth-capture-page .booth-gallery {
+  grid-area: gallery;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  height: auto;
+  min-width: 0;
+  min-height: 0;
+
+  padding: 10px 12px;
+
+  border: 1px solid #a2a49d;
+  border-radius: 10px;
+
+  background: linear-gradient(
+    180deg,
+    #b5b8b0,
+    #d3d4cd
+  );
+
+  box-shadow:
+    inset 0 2px 5px rgb(0 0 0 / 15%),
+    0 1px 0 rgb(255 255 255 / 85%);
+}
+
+.booth-capture-page .booth-shots-row {
+  width: 100%;
+  height: auto;
+  align-items: center;
+  gap: 9px;
+}
+
+/* Preserve the full photo in each thumbnail */
+.booth-capture-page
+.booth-shots-row .shot-thumb {
+  display: grid;
+  place-items: center;
+
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  aspect-ratio: 1088 / 658;
+
+  border: 1px solid #8f938d;
+  border-radius: 6px;
+
+  background: #777d78;
+  box-shadow: inset 0 1px 3px rgb(0 0 0 / 18%);
+}
+
+.booth-capture-page
+.booth-shots-row .shot-thumb img {
+  position: absolute;
+  inset: 0;
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+  object-position: center;
+}
+
+/* Selected thumbnail has a clear focus ring */
+.booth-capture-page
+.booth-shots-row .shot-thumb-selected {
+  border-color: #373b38;
+  box-shadow: 0 0 0 2px #373b38;
+}
+
+/* Keep action errors readable */
+.booth-capture-page .inline-error {
+  width: 100%;
+  max-width: 190px;
+  margin: 0;
+}
+
+/* Tablet and mobile: stack controls below the LCD */
+@media (max-width: 820px) {
+  .booth-capture-page .booth-page {
+    padding: 12px;
+  }
+
+  .booth-capture-page .booth-session {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    grid-template-areas:
+      "camera"
+      "gallery"
+      "controls";
+
+    gap: 11px;
+    width: min(100%, 580px);
+    height: auto;
+    max-height: none;
+    padding: 42px 16px 17px;
+    border-radius: 21px;
+  }
+
+  .booth-capture-page .booth-camera-frame {
+    height: auto;
+    padding: 7px;
+  }
+
+  .booth-capture-page
+  .booth-camera-frame .camera-window {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1088 / 658;
+  }
+
+  .booth-capture-page .booth-controls {
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 10px;
+
+    width: 100%;
+    height: auto;
+    padding: 5px 2px 0;
+  }
+
+  .booth-capture-page .booth-controls::before,
+  .booth-capture-page .booth-controls::after {
+    display: none;
+  }
+
+  .booth-capture-page .booth-controls-top {
+    width: auto;
+    flex: none;
+    text-align: left;
+  }
+
+  .booth-capture-page .booth-progress {
+    font-size: 13px;
+  }
+
+  .booth-capture-page .booth-controls-bottom {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    width: auto;
+  }
+
+  .booth-capture-page
+  .booth-controls .booth-shutter {
+    width: 60px;
+    height: 60px;
+    min-height: 60px;
+    border-width: 5px;
+  }
+
+  .booth-camera-icon {
+    width: 25px;
+    height: 25px;
+  }
+
+  .booth-capture-page .booth-next-button,
+  .booth-capture-page .booth-cancel-retake {
+    width: auto;
+    min-height: 36px;
+    padding: 7px 11px;
+  }
+
+  .booth-capture-page .booth-gallery {
+    padding: 7px;
+  }
+
+  .booth-capture-page .booth-shots-row {
+    gap: 6px;
+  }
+}
+
+/* Extremely narrow phones */
+@media (max-width: 380px) {
+  .booth-capture-page .booth-session {
+    padding-inline: 11px;
+  }
+
+  .booth-capture-page .booth-controls {
+    gap: 5px;
+  }
+
+  .booth-capture-page
+  .booth-controls .booth-shutter {
+    width: 54px;
+    height: 54px;
+    min-height: 54px;
+  }
+
+  .booth-capture-page .booth-reset {
+    font-size: 9px;
+    padding-inline: 5px;
+  }
+}
+
+/* Short screens can scroll rather than hide the controls. */
+@media (max-height: 570px) {
+  .booth-capture-page {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  .booth-capture-page .booth-page {
+    height: auto;
+    min-height: 100dvh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .booth-capture-page .booth-shutter {
+    transition: none;
+  }
+}

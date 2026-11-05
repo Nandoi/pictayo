@@ -30,10 +30,86 @@ const SAVED_FEEDBACK_DURATION = 1800
 const sleep = (ms: number) =>
   new Promise<void>((resolve) => window.setTimeout(resolve, ms))
 
+function photoRectStyle(
+  layout: PhotoLayout,
+  rect: PhotoRect,
+): CSSProperties {
+  return {
+    position: 'absolute',
+    left: `${(rect.x / layout.width) * 100}%`,
+    top: `${(rect.y / layout.height) * 100}%`,
+    width: `${(rect.width / layout.width) * 100}%`,
+    height: `${(rect.height / layout.height) * 100}%`,
+  }
+}
+
+
+function LayoutPicker({
+  onSelect,
+}: {
+  onSelect: (id: PhotoLayoutId) => void
+}) {
+  return (
+    <section
+      className="layout-picker-page"
+      aria-labelledby="layout-picker-title"
+    >
+      <div className="layout-picker-header">
+        <h1 id="layout-picker-title">
+          Choose Layout
+        </h1>
+      </div>
+
+      <div
+        className="layout-picker-grid"
+        role="group"
+        aria-label="Choose a photo layout"
+      >
+        {PHOTO_LAYOUTS.map((option) => (
+          <button
+            key={option.id}
+            type="button"
+            className="layout-picker-card"
+            onClick={() => onSelect(option.id)}
+            aria-label={`${option.name} layout. Continue to camera.`}
+          >
+            <span
+              className="layout-picker-illustration"
+              aria-hidden="true"
+            >
+              <span
+                className="layout-picker-paper"
+                style={{
+                  width: `min(100%, ${Math.round(
+                    132 * option.width / option.height
+                  )}px)`,
+                  aspectRatio:
+                    `${option.width} / ${option.height}`,
+                }}
+              >
+                {option.slots.map((rect, index) => (
+                  <span
+                    key={index}
+                    className="layout-picker-photo"
+                    style={photoRectStyle(option, rect)}
+                  />
+                ))}
+              </span>
+            </span>
+
+            <span className="layout-picker-card-title">
+              {option.name}
+            </span>
+          </button>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 type CameraSessionProps = {
   photos: PhotoSlots
   layout: PhotoLayout
-  onLayoutChange: (id: PhotoLayoutId) => void
   retakeSlot: number | null
   onPhoto: (index: number, dataUrl: string) => void
   onDesign: () => void
@@ -44,7 +120,6 @@ type CameraSessionProps = {
 function CameraSession({
   photos,
   layout,
-  onLayoutChange,
   retakeSlot,
   onPhoto,
   onDesign,
@@ -52,17 +127,20 @@ function CameraSession({
   onReset,
 }: CameraSessionProps) {
   const { videoRef, error, loading, retry } = useCamera()
-
   const [ready, setReady] = useState(false)
   const [busy, setBusy] = useState(false)
   const [countdown, setCountdown] =
     useState<number | 'flash' | null>(null)
-  const [currentShot, setCurrentShot] = useState<number | null>(null)
-  const [captureError, setCaptureError] = useState<string | null>(null)
+  const [currentShot, setCurrentShot] =
+    useState<number | null>(null)
+  const [captureError, setCaptureError] =
+    useState<string | null>(null)
   const [selectedRetake, setSelectedRetake] =
     useState<number | null>(null)
-  const [savedPhoto, setSavedPhoto] = useState<number | null>(null)
-  const [freshPhoto, setFreshPhoto] = useState<number | null>(null)
+  const [savedPhoto, setSavedPhoto] =
+    useState<number | null>(null)
+  const [freshPhoto, setFreshPhoto] =
+    useState<number | null>(null)
 
   const runId = useRef(0)
   const feedbackTimer = useRef<number | null>(null)
@@ -70,11 +148,9 @@ function CameraSession({
 
   const completed =
     photos.length === layout.count && photos.every(Boolean)
-  const remaining = photos.filter((photo) => !photo).length
-  const taken = layout.count - remaining
+  const taken = photos.filter(Boolean).length
   const nextShot = photos.findIndex((photo) => photo === null)
   const selectedPhoto = retakeSlot ?? selectedRetake
-  const activePhoto = selectedPhoto ?? nextShot
 
   useEffect(() => () => {
     runId.current += 1
@@ -129,7 +205,10 @@ function CameraSession({
     }
   }
 
-  async function takeShot(index: number, finishAfter = false) {
+  async function takeShot(
+    index: number,
+    finishAfter = false
+  ) {
     if (
       capturing.current ||
       busy ||
@@ -214,7 +293,10 @@ function CameraSession({
   }
 
   return (
-    <section className="booth-session" aria-label="Photobooth capture">
+    <section
+      className="booth-session"
+      aria-label="Photobooth capture"
+    >
       <div className="booth-camera-frame">
         <CameraPreview
           videoRef={videoRef}
@@ -245,39 +327,16 @@ function CameraSession({
         )}
       </div>
 
-      <aside className="booth-controls" aria-label="Capture controls">
+      <aside
+        className="booth-controls"
+        aria-label="Capture controls"
+      >
         <div className="booth-controls-top">
-          <div className="booth-layout-label">Layout</div>
-
           <div
-            className="booth-layout-options"
-            role="group"
-            aria-label="Photo layout"
+            className="booth-progress"
+            aria-live="polite"
           >
-            {PHOTO_LAYOUTS.map((option) => (
-              <button
-                key={option.id}
-                type="button"
-                className={`booth-layout-choice ${
-                  layout.id === option.id
-                    ? 'booth-layout-choice-active'
-                    : ''
-                }`}
-                aria-pressed={layout.id === option.id}
-                disabled={
-                  taken > 0 ||
-                  busy ||
-                  retakeSlot !== null
-                }
-                onClick={() => onLayoutChange(option.id)}
-              >
-                {option.name}
-              </button>
-            ))}
-          </div>
-
-          <div className="booth-progress" aria-live="polite">
-            {taken} of {layout.count} taken
+            {String(taken).padStart(2, '0')} / {String(layout.count).padStart(2, '0')}
           </div>
 
           <p className="booth-help" aria-live="polite">
@@ -290,26 +349,40 @@ function CameraSession({
         </div>
 
         <div className="booth-controls-bottom">
-          <button
-            type="button"
-            className="button button-primary booth-shutter"
-            onClick={handleCapture}
-            disabled={
-              busy ||
-              loading ||
-              !ready ||
-              Boolean(error) ||
-              (completed && selectedPhoto === null)
-            }
-          >
-            {busy
-              ? `Capturing photo ${(currentShot ?? 0) + 1}...`
-              : selectedPhoto !== null
-                ? `Retake photo ${selectedPhoto + 1}`
-                : completed
-                  ? 'All photos taken'
-                  : `Take photo ${activePhoto + 1}`}
-          </button>
+          {(!completed || selectedPhoto !== null) && (
+            <button
+              type="button"
+              className="button button-primary booth-shutter"
+              onClick={handleCapture}
+              disabled={
+                busy ||
+                loading ||
+                !ready ||
+                Boolean(error)
+              }
+              aria-label={
+                busy
+                  ? `Capturing photo ${(currentShot ?? 0) + 1}`
+                  : selectedPhoto !== null
+                    ? `Retake photo ${selectedPhoto + 1}`
+                    : `Take photo ${nextShot + 1}`
+              }
+              title={
+                selectedPhoto !== null
+                  ? `Retake photo ${selectedPhoto + 1}`
+                  : `Take photo ${nextShot + 1}`
+              }
+            >
+              <svg
+                className="booth-camera-icon"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z" />
+                <circle cx="12" cy="13" r="3.5" />
+              </svg>
+            </button>
+          )}
 
           {selectedPhoto !== null && (
             <button
@@ -350,7 +423,10 @@ function CameraSession({
         </div>
       </aside>
 
-      <div className="booth-gallery" aria-label="Captured photos">
+      <div
+        className="booth-gallery"
+        aria-label="Captured photos"
+      >
         <div
           className="shots-row booth-shots-row"
           style={{
@@ -358,105 +434,87 @@ function CameraSession({
               `repeat(${layout.count}, minmax(0, 1fr))`,
           }}
         >
-          {Array.from({ length: layout.count }, (_, index) => (
-            <button
-              key={index}
-              type="button"
-              className={`shot-thumb ${
-                photos[index] ? 'shot-thumb-filled' : ''
-              } ${
-                currentShot === index
-                  ? 'shot-thumb-active'
-                  : ''
-              } ${
-                selectedPhoto === index
-                  ? 'shot-thumb-selected'
-                  : ''
-              } ${
-                freshPhoto === index
-                  ? 'shot-thumb-new'
-                  : ''
-              }`}
-              disabled={
-                !photos[index] ||
-                busy ||
-                loading ||
-                Boolean(error) ||
-                !ready ||
-                retakeSlot !== null
-              }
-              onClick={() => selectRetake(index)}
-              aria-pressed={
-                photos[index]
-                  ? selectedPhoto === index
-                  : undefined
-              }
-              aria-label={
-                photos[index]
-                  ? selectedPhoto === index
-                    ? `Photo ${index + 1} selected for retake`
-                    : `Select photo ${index + 1} to retake`
-                  : `Photo ${index + 1} not taken`
-              }
-              title={
-                photos[index]
-                  ? selectedPhoto === index
-                    ? `Photo ${index + 1} selected. Press Retake photo ${index + 1} to capture.`
-                    : `Select photo ${index + 1} to retake`
-                  : `Photo ${index + 1} not taken`
-              }
-            >
-              {photos[index] ? (
-                <img
-                  src={photos[index]}
-                  alt={`Photo ${index + 1}`}
-                />
-              ) : (
-                <span className="shot-thumb-number">
-                  0{index + 1}
-                </span>
-              )}
+          {Array.from(
+            { length: layout.count },
+            (_, index) => (
+              <button
+                key={index}
+                type="button"
+                className={`shot-thumb ${
+                  photos[index]
+                    ? 'shot-thumb-filled'
+                    : ''
+                } ${
+                  currentShot === index
+                    ? 'shot-thumb-active'
+                    : ''
+                } ${
+                  selectedPhoto === index
+                    ? 'shot-thumb-selected'
+                    : ''
+                } ${
+                  freshPhoto === index
+                    ? 'shot-thumb-new'
+                    : ''
+                }`}
+                disabled={
+                  !photos[index] ||
+                  busy ||
+                  loading ||
+                  Boolean(error) ||
+                  !ready ||
+                  retakeSlot !== null
+                }
+                onClick={() => selectRetake(index)}
+                aria-pressed={
+                  photos[index]
+                    ? selectedPhoto === index
+                    : undefined
+                }
+                aria-label={
+                  photos[index]
+                    ? selectedPhoto === index
+                      ? `Photo ${index + 1} selected for retake`
+                      : `Select photo ${index + 1} to retake`
+                    : `Photo ${index + 1} not taken`
+                }
+              >
+                {photos[index] ? (
+                  <img
+                    src={photos[index]}
+                    alt={`Photo ${index + 1}`}
+                  />
+                ) : (
+                  <span className="shot-thumb-number">
+                    0{index + 1}
+                  </span>
+                )}
 
-              {photos[index] && (
-                <span
-                  className="shot-retake-indicator"
-                  aria-hidden="true"
-                >
-                  <span className="booth-retake-symbol">
-                    ↻
+                {photos[index] && (
+                  <span
+                    className="shot-retake-indicator"
+                    aria-hidden="true"
+                  >
+                    <span className="booth-retake-symbol">
+                      ↻
+                    </span>
+                    <span className="booth-retake-text">
+                      {selectedPhoto === index
+                        ? 'Selected'
+                        : 'Retake'}
+                    </span>
                   </span>
-                  <span className="booth-retake-text">
-                    {selectedPhoto === index
-                      ? 'Selected'
-                      : 'Retake'}
-                  </span>
-                </span>
-              )}
-            </button>
-          ))}
+                )}
+              </button>
+            )
+          )}
         </div>
       </div>
     </section>
   )
 }
 
-function photoRectStyle(
-  layout: PhotoLayout,
-  rect: PhotoRect,
-): CSSProperties {
-  return {
-    position: 'absolute',
-    left: `${(rect.x / layout.width) * 100}%`,
-    top: `${(rect.y / layout.height) * 100}%`,
-    width: `${(rect.width / layout.width) * 100}%`,
-    height: `${(rect.height / layout.height) * 100}%`,
-  }
-}
-
-/**
- * Use identical photo positions for the preview and
- * background thumbnails. The PNG uses these same rectangles.
- */
+/** Shared positioning for the preview and theme thumbnails */
 function LayoutPhotos({
   photos,
   layout,
@@ -552,7 +610,8 @@ function StripPreview({
       style={{
         backgroundColor: theme.background,
         color: theme.ink,
-        aspectRatio: `${layout.width} / ${layout.height}`,
+        aspectRatio:
+          `${layout.width} / ${layout.height}`,
       }}
       aria-label={`${layout.name} photo preview`}
     >
@@ -572,24 +631,28 @@ function StripPreview({
   )
 }
 
-type ReviewProps = {
-  photos: PhotoSlots
-  onRetake: (slot: number) => void
-  onReset: () => void
-  saving: boolean
-}
-
 function PhotoReview({
   photos,
   onRetake,
   onReset,
   saving,
-}: ReviewProps) {
+}: {
+  photos: PhotoSlots
+  onRetake: (slot: number) => void
+  onReset: () => void
+  saving: boolean
+}) {
   return (
-    <section className="studio-card" aria-label="Photo review">
+    <section
+      className="studio-card"
+      aria-label="Photo review"
+    >
       <div className="review-grid">
         {photos.map((photo, index) => (
-          <div className="review-photo" key={index}>
+          <div
+            className="review-photo"
+            key={index}
+          >
             {photo && (
               <img
                 src={photo}
@@ -632,7 +695,7 @@ export function Photobooth() {
   )
 
   const [stage, setStage] =
-    useState<'camera' | 'design'>('camera')
+    useState<'layout' | 'camera' | 'design'>('layout')
 
   const [layoutId, setLayoutId] =
     useState<PhotoLayoutId>('4-cut')
@@ -645,14 +708,18 @@ export function Photobooth() {
 
   const [caption, setCaption] = useState('')
   const [showDate, setShowDate] = useState(false)
-  const [createdAt, setCreatedAt] = useState(() => new Date())
+  const [createdAt, setCreatedAt] =
+    useState(() => new Date())
 
   const [downloadStatus, setDownloadStatus] =
-    useState<'idle' | 'preparing' | 'requested' | 'error'>('idle')
+    useState<
+      'idle' | 'preparing' | 'requested' | 'error'
+    >('idle')
 
-  const [saveError, setSaveError] = useState<string | null>(null)
+  const [saveError, setSaveError] =
+    useState<string | null>(null)
+
   const downloadLock = useRef(false)
-
   const [restartOpen, setRestartOpen] = useState(false)
   const restartDialogRef = useRef<HTMLDialogElement>(null)
 
@@ -668,14 +735,16 @@ export function Photobooth() {
   }, [restartOpen])
 
   const theme =
-    THEMES.find((item) => item.id === themeId) ?? THEMES[0]
+    THEMES.find((item) => item.id === themeId)
+    ?? THEMES[0]
 
   const layout =
     PHOTO_LAYOUTS.find((item) => item.id === layoutId)
     ?? PHOTO_LAYOUTS[0]
 
   const complete =
-    photos.length === layout.count && photos.every(Boolean)
+    photos.length === layout.count
+    && photos.every(Boolean)
 
   const saving = downloadStatus === 'preparing'
 
@@ -684,35 +753,20 @@ export function Photobooth() {
     setSaveError(null)
   }
 
-  function changeLayout(nextId: PhotoLayoutId) {
-    const next = PHOTO_LAYOUTS.find(
-      (item) => item.id === nextId
+  function chooseLayout(id: PhotoLayoutId) {
+    if (stage !== 'layout') return
+
+    const chosen = PHOTO_LAYOUTS.find(
+      (item) => item.id === id
     )
 
-    if (!next || next.id === layout.id || saving) return
+    if (!chosen) return
 
-    // Keep all existing photos when two layouts use
-    // the same number of shots.
-    if (
-      stage === 'design' &&
-      next.count === photos.length
-    ) {
-      setLayoutId(next.id)
-      clearDownloadFeedback()
-      return
-    }
-
-    // Layout changes that alter the number of shots
-    // are allowed only before the first capture.
-    if (
-      stage !== 'camera' ||
-      photos.some(Boolean)
-    ) return
-
-    setLayoutId(next.id)
-    setPhotos(Array(next.count).fill(null))
+    setLayoutId(chosen.id)
+    setPhotos(Array(chosen.count).fill(null))
     setRetakeSlot(null)
     setCreatedAt(new Date())
+    setStage('camera')
     clearDownloadFeedback()
   }
 
@@ -728,7 +782,7 @@ export function Photobooth() {
     setLayoutId('4-cut')
     setPhotos(Array(PHOTO_COUNT).fill(null))
     setRetakeSlot(null)
-    setStage('camera')
+    setStage('layout')
     setCreatedAt(new Date())
     setThemeId(THEMES[0].id)
     setCaption('')
@@ -804,15 +858,18 @@ export function Photobooth() {
   return (
     <main
       className={`site-shell ${
-        stage === 'camera' ? 'booth-capture-page' : ''
+        stage === 'camera'
+          ? 'booth-capture-page'
+          : ''
       }`}
     >
-      {stage === 'camera' ? (
+      {stage === 'layout' ? (
+        <LayoutPicker onSelect={chooseLayout} />
+      ) : stage === 'camera' ? (
         <div className="booth-page">
           <CameraSession
             photos={photos}
             layout={layout}
-            onLayoutChange={changeLayout}
             retakeSlot={retakeSlot}
             onPhoto={savePhoto}
             onDesign={designStrip}
@@ -846,35 +903,6 @@ export function Photobooth() {
               </div>
 
               <div className="customizer">
-                <span className="field-label">Layout</span>
-
-                <div
-                  className="design-layout-options"
-                  role="group"
-                  aria-label="Photo layout"
-                >
-                  {PHOTO_LAYOUTS
-                    .filter((option) =>
-                      option.count === layout.count
-                    )
-                    .map((option) => (
-                      <button
-                        key={option.id}
-                        type="button"
-                        className={`design-layout-choice ${
-                          layout.id === option.id
-                            ? 'design-layout-choice-active'
-                            : ''
-                        }`}
-                        aria-pressed={layout.id === option.id}
-                        disabled={saving}
-                        onClick={() => changeLayout(option.id)}
-                      >
-                        {option.name}
-                      </button>
-                    ))}
-                </div>
-
                 <span className="field-label">
                   Background
                 </span>
@@ -900,7 +928,8 @@ export function Photobooth() {
                       <div
                         className="theme-swatch"
                         style={{
-                          backgroundColor: option.background,
+                          backgroundColor:
+                            option.background,
                           aspectRatio:
                             `${layout.width} / ${layout.height}`,
                         }}
@@ -950,7 +979,6 @@ export function Photobooth() {
                     }}
                     disabled={saving}
                   />
-
                   <span>Date</span>
                 </label>
 
@@ -1010,7 +1038,8 @@ export function Photobooth() {
                     </strong>
                     <span>{saveError}</span>
                     <span>
-                      Your photos are still here. Select Try download again.
+                      Your photos are still here.
+                      Select Try download again.
                     </span>
                   </div>
                 )}
