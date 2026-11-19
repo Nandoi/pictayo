@@ -323,12 +323,14 @@ function CameraSession({
       className="booth-session"
       aria-label="Photobooth capture"
     >
-      <span
-        className="digicam-engraving"
-        aria-hidden="true"
-      >
-        Fer &lt;3 Mia
-      </span>
+      <button
+        type="button"
+        className="booth-window-close"
+        onClick={handleReset}
+        disabled={busy}
+        aria-label="Start over"
+        title="Start over"
+      />
 
       <div className="booth-camera-frame">
         <CameraPreview
@@ -467,14 +469,7 @@ function CameraSession({
             </p>
           )}
 
-          <button
-            type="button"
-            className="text-button booth-reset"
-            onClick={handleReset}
-            disabled={busy}
-          >
-            Start over
-          </button>
+
         </div>
       </aside>
 
