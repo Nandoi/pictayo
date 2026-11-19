@@ -1,4 +1,4 @@
-/* PicTayo — shared Photo Booth visual language.
+/* PicTayo — light Photo Booth visual language.
    Layout picker, strip design, dialogs and shared capture feedback.
    The camera window itself is styled in camera.css. */
 
@@ -35,8 +35,8 @@
 
 .site-shell:not(.booth-capture-page) {
   min-height: 100dvh;
-  background: #1b1b1d;
-  color: #eeeeef;
+  background: #ffffff;
+  color: #252527;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
@@ -103,10 +103,10 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
   padding: 24px;
-  border: 1px solid #505054;
+  border: 1px solid #d4d4d6;
   border-radius: 0 0 10px 10px;
-  background: #242426;
-  box-shadow: 0 18px 44px rgb(0 0 0 / 15%);
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 5%);
 }
 
 .layout-picker-card {
@@ -116,10 +116,10 @@
   min-width: 0;
   min-height: 210px;
   padding: 16px 10px 14px;
-  border: 1px solid #454549;
+  border: 1px solid #dedee2;
   border-radius: 7px;
-  background: #18181a;
-  color: #ededee;
+  background: #fafafa;
+  color: #27272b;
   box-shadow: none;
   cursor: pointer;
   text-align: center;
@@ -127,8 +127,8 @@
 }
 
 .layout-picker-card:hover:not(:disabled) {
-  border-color: #a6a6ac;
-  background: #2d2d30;
+  border-color: #aaaaaf;
+  background: #f2f2f4;
   transform: none;
   box-shadow: none;
 }
@@ -161,7 +161,7 @@
 
 .layout-picker-card-title {
   margin-top: auto;
-  color: #ededee;
+  color: #27272b;
   font-size: 13px;
   font-weight: 600;
 }
@@ -208,27 +208,32 @@
   pointer-events: none;
 }
 
-/* ===== Design stage: matching Photo Booth windows ===== */
+/* ===== Design stage: one Photo Booth workspace ===== */
 
-.site-shell:not(.booth-capture-page) .studio-card,
-.site-shell:not(.booth-capture-page) .preview-card {
+/* The design stage already has a shared page wrapper in Photobooth.tsx.
+   Turn that wrapper into the window instead of drawing two window shells. */
+.site-shell:not(.booth-capture-page) > .mx-auto {
   position: relative;
-  min-width: 0;
-  overflow: hidden;
+  isolation: isolate;
+  width: min(calc(100% - 24px), 1160px);
+  max-width: 1160px;
+  margin: clamp(18px, 5dvh, 48px) auto;
   padding: 34px 0 0;
-  border: 1px solid #656569;
+  overflow: hidden;
+  border: 1px solid #d0d0d4;
   border-radius: 10px;
-  background: #242426;
-  color: #eeeeef;
-  box-shadow: 0 16px 36px rgb(0 0 0 / 14%);
+  background: #ffffff;
+  box-shadow: 0 8px 28px rgb(0 0 0 / 6%);
 }
 
-.site-shell:not(.booth-capture-page) .studio-card::before,
-.site-shell:not(.booth-capture-page) .preview-card::before {
+/* One title bar shared by Photos, the strip preview, and controls. */
+.site-shell:not(.booth-capture-page) > .mx-auto::before {
+  content: 'Design Your Strip';
   position: absolute;
+  z-index: 2;
   top: 0;
-  right: 0;
   left: 0;
+  right: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -241,8 +246,61 @@
   pointer-events: none;
 }
 
-.site-shell:not(.booth-capture-page) .studio-card::before { content: 'Photos'; }
-.site-shell:not(.booth-capture-page) .preview-card::before { content: 'Design Your Strip'; }
+/* Decorative macOS-style lights, matching the camera and layout picker. */
+.site-shell:not(.booth-capture-page) > .mx-auto::after {
+  content: '';
+  position: absolute;
+  z-index: 3;
+  top: 11px;
+  left: 12px;
+  width: 54px;
+  height: 12px;
+  background:
+    radial-gradient(circle, #ff6058 0 5px, transparent 5.5px) 0 0 / 12px 12px no-repeat,
+    radial-gradient(circle, #ffbd2e 0 5px, transparent 5.5px) 20px 0 / 12px 12px no-repeat,
+    radial-gradient(circle, #28c840 0 5px, transparent 5.5px) 40px 0 / 12px 12px no-repeat;
+  pointer-events: none;
+}
+
+/* Two work areas within one window — no individual title bars or cards. */
+.site-shell:not(.booth-capture-page) > .mx-auto > .grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  align-items: stretch;
+  gap: 0;
+}
+
+.site-shell:not(.booth-capture-page) .studio-card,
+.site-shell:not(.booth-capture-page) .preview-card {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: #ffffff;
+  color: #29292c;
+  box-shadow: none;
+}
+
+.site-shell:not(.booth-capture-page) .studio-card::before,
+.site-shell:not(.booth-capture-page) .studio-card::after,
+.site-shell:not(.booth-capture-page) .preview-card::before,
+.site-shell:not(.booth-capture-page) .preview-card::after {
+  content: none;
+  display: none;
+}
+
+.site-shell:not(.booth-capture-page) .studio-card {
+  border-right: 1px solid #dfdfe2;
+}
+
+/* Inside the right-hand area: strip preview next to customization controls. */
+.site-shell:not(.booth-capture-page) .preview-card {
+  display: grid;
+  grid-template-columns: minmax(145px, .8fr) minmax(230px, 1.2fr);
+  align-items: stretch;
+}
 
 .site-shell:not(.booth-capture-page) .review-grid {
   display: grid;
@@ -256,9 +314,9 @@
   min-width: 0;
   overflow: hidden;
   aspect-ratio: 1088 / 658;
-  border: 1px solid #47474a;
+  border: 1px solid #dedee2;
   border-radius: 6px;
-  background: #111112;
+  background: #f1f1f3;
 }
 
 .site-shell:not(.booth-capture-page) .review-photo img {
@@ -276,8 +334,8 @@
   padding: 4px 7px;
   border: 0;
   border-radius: 4px;
-  background: rgb(0 0 0 / 65%);
-  color: #f5f5f5;
+  background: rgb(255 255 255 / 90%);
+  color: #28282b;
   font-size: 10px;
 }
 
@@ -335,14 +393,15 @@
   display: grid;
   place-items: center;
   min-height: 0;
-  padding: 22px 16px;
-  border-bottom: 1px solid #414146;
-  background: #121213;
+  padding: 22px 12px;
+  border-right: 1px solid #dedee2;
+  border-bottom: 0;
+  background: #f4f4f5;
 }
 
 .site-shell:not(.booth-capture-page) .preview-stage .strip {
   position: relative;
-  width: min(100%, 175px);
+  width: min(100%, 150px);
   max-width: none;
   overflow: hidden;
   box-shadow: none;
@@ -355,7 +414,7 @@
 .site-shell:not(.booth-capture-page) .field-label {
   display: block;
   margin-bottom: 8px;
-  color: #d1d1d4;
+  color: #444449;
   font-size: 11px;
   font-weight: 600;
 }
@@ -376,25 +435,25 @@
   min-width: 0;
   min-height: 128px;
   padding: 10px 4px;
-  border: 1px solid #48484c;
+  border: 1px solid #dedee1;
   border-radius: 6px;
-  background: #18181a;
-  color: #ccccd0;
+  background: #fafafa;
+  color: #4a4a50;
   box-shadow: none;
   transform: none;
 }
 
 .site-shell:not(.booth-capture-page) .theme-option:hover:not(:disabled) {
-  border-color: #929297;
-  background: #303034;
+  border-color: #a6a6ac;
+  background: #f1f1f3;
   box-shadow: none;
   transform: none;
 }
 
 .site-shell:not(.booth-capture-page) .theme-option-selected {
   border-color: #ff535b;
-  background: #2d292b;
-  color: #fff;
+  background: #fff5f5;
+  color: #27272b;
 }
 
 .site-shell:not(.booth-capture-page) .theme-option .theme-swatch {
@@ -406,7 +465,7 @@
   height: auto;
   padding: 0;
   overflow: hidden;
-  border: 1px solid rgb(255 255 255 / 18%);
+  border: 1px solid rgb(0 0 0 / 12%);
   border-radius: 2px;
   box-shadow: none;
 }
@@ -421,16 +480,16 @@
   width: 100%;
   min-height: 42px;
   padding: 10px 12px;
-  border: 1px solid #515157;
+  border: 1px solid #d2d2d6;
   border-radius: 6px;
-  background: #151517;
-  color: #f1f1f1;
+  background: #ffffff;
+  color: #252529;
   font-size: 13px;
   box-shadow: none;
 }
 
 .site-shell:not(.booth-capture-page) .caption-input::placeholder {
-  color: #89898f;
+  color: #929297;
 }
 
 .site-shell:not(.booth-capture-page) .caption-input:focus {
@@ -443,7 +502,7 @@
   gap: 9px;
   min-height: 38px;
   margin: 12px 0;
-  color: #cfcfd3;
+  color: #505057;
   font-size: 12px;
 }
 
@@ -495,27 +554,27 @@
 .download-feedback {
   margin: 10px 0 0;
   padding: 10px 12px;
-  border: 1px solid #54545a;
+  border: 1px solid #dcdce0;
   border-radius: 6px;
-  background: #303034;
-  color: #d2d2d6;
+  background: #f7f7f8;
+  color: #4d4d52;
   font-size: 12px;
   line-height: 1.5;
 }
 
 .download-feedback-requested {
-  border-color: #47604d;
-  background: #23362a;
-  color: #d3e8d8;
+  border-color: #cfe0d3;
+  background: #f1f8f3;
+  color: #285b35;
 }
 
 .download-feedback-error {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  border-color: #86565d;
-  background: #3b2429;
-  color: #ffced6;
+  border-color: #ecc8cf;
+  background: #fff6f8;
+  color: #842e3c;
 }
 
 /* ===== Restart confirmation ===== */
@@ -527,11 +586,11 @@
   margin: auto;
   padding: 34px 0 0;
   overflow: auto;
-  border: 1px solid #737378;
+  border: 1px solid #d0d0d4;
   border-radius: 10px;
-  background: #242426;
-  color: #eeeeef;
-  box-shadow: 0 20px 55px rgb(0 0 0 / 25%);
+  background: #ffffff;
+  color: #29292c;
+  box-shadow: 0 16px 44px rgb(0 0 0 / 14%);
 }
 
 .restart-confirmation::backdrop {
@@ -561,7 +620,7 @@
 
 .restart-confirmation h2 {
   margin: 0;
-  color: #fafafa;
+  color: #262629;
   font-size: 19px;
   font-weight: 600;
   line-height: 1.3;
@@ -570,7 +629,7 @@
 
 .restart-confirmation p {
   margin: 10px 0 22px;
-  color: #bcbcc1;
+  color: #66666b;
   font-size: 13px;
   line-height: 1.6;
 }
@@ -614,6 +673,21 @@
   outline-offset: 2px;
 }
 
+@media (max-width: 860px) {
+  .site-shell:not(.booth-capture-page) > .mx-auto > .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .site-shell:not(.booth-capture-page) .studio-card {
+    border-right: 0;
+    border-bottom: 1px solid #dedee2;
+  }
+
+  .site-shell:not(.booth-capture-page) .preview-card {
+    grid-template-columns: minmax(145px, .8fr) minmax(230px, 1.2fr);
+  }
+}
+
 @media (max-width: 820px) {
   .site-shell:not(.booth-capture-page) .review-grid {
     gap: 8px;
@@ -639,6 +713,27 @@
   .site-shell:not(.booth-capture-page) .caption-input {
     min-height: 44px;
     font-size: 16px;
+  }
+}
+
+@media (max-width: 580px) {
+  .site-shell:not(.booth-capture-page) > .mx-auto {
+    width: calc(100% - 16px);
+    margin: 10px auto;
+  }
+
+  .site-shell:not(.booth-capture-page) .preview-card {
+    display: block;
+  }
+
+  .site-shell:not(.booth-capture-page) .preview-stage {
+    border-right: 0;
+    border-bottom: 1px solid #dedee2;
+    padding: 16px 12px;
+  }
+
+  .site-shell:not(.booth-capture-page) .preview-stage .strip {
+    width: min(38vw, 145px);
   }
 }
 
