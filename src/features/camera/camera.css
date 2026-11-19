@@ -182,6 +182,7 @@
   object-fit: cover;
   object-position: center;
   transform: scaleX(-1);
+  filter: var(--camera-effect, none);
 }
 
 /* A captured thumbnail already confirms success; no separate popup. */
@@ -755,5 +756,108 @@
   .booth-capture-page .shot-retake-indicator,
   .booth-capture-page .digicam-timer-button {
     transition: none;
+  }
+}
+
+
+/* Camera effects: compact toolbar control and flat selection tray. */
+.booth-capture-page .booth-controls .booth-effects-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 68px;
+  min-height: 28px;
+  padding: 5px 10px;
+  border: 1px solid #bcbcbc;
+  border-radius: 5px;
+  background: #f4f4f4;
+  color: #444;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  box-shadow: none;
+  transform: none;
+}
+
+.booth-capture-page .booth-controls .booth-effects-toggle:hover:not(:disabled),
+.booth-capture-page .booth-controls .booth-effects-toggle[aria-expanded='true'] {
+  border-color: #a8a8a8;
+  background: #fff;
+  color: #202020;
+}
+
+.booth-capture-page .booth-effects-panel {
+  position: absolute;
+  z-index: 8;
+  right: 12px;
+  bottom: calc(100% + 8px);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  width: min(290px, calc(100vw - 24px));
+  padding: 8px;
+  border: 1px solid #dedee3;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 8px 18px rgb(0 0 0 / 13%);
+}
+
+.booth-capture-page .booth-effect-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  min-height: 70px;
+  padding: 6px;
+  border: 1px solid #e5e5e8;
+  border-radius: 5px;
+  background: #fafafa;
+  color: #333;
+  font-size: 10px;
+  font-weight: 500;
+  box-shadow: none;
+  transform: none;
+}
+
+.booth-capture-page .booth-effect-option:hover:not(:disabled) {
+  border-color: #bbb;
+  background: #f5f5f7;
+}
+
+.booth-capture-page .booth-effect-option[aria-pressed='true'] {
+  border-color: #ff4d54;
+  background: #fff5f5;
+  color: #252525;
+}
+
+.booth-capture-page .booth-effect-swatch {
+  display: block;
+  width: 100%;
+  height: 34px;
+  border-radius: 3px;
+  background: linear-gradient(120deg, #c8a084 0 36%, #7ba49a 36% 69%, #a9b4bc 69%);
+}
+
+.booth-capture-page .booth-effect-option:focus-visible,
+.booth-capture-page .booth-effects-toggle:focus-visible {
+  outline: 2px solid #2679ee;
+  outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+  .booth-capture-page .booth-controls .booth-effects-toggle {
+    min-width: 56px;
+    min-height: 26px;
+    padding: 4px 7px;
+    font-size: 10px;
+  }
+
+  .booth-capture-page .booth-effects-panel {
+    right: 6px;
+    width: min(260px, calc(100vw - 24px));
   }
 }

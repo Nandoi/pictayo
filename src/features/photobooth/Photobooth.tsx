@@ -2,7 +2,12 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { CameraPreview } from '../camera/CameraPreview'
-import { capturePhoto } from '../camera/camera'
+import {
+  CAMERA_EFFECTS,
+  capturePhoto,
+  getCameraEffect,
+} from '../camera/camera'
+import type { CameraEffectId } from '../camera/camera'
 import { useCamera } from '../camera/useCamera'
 import {
   drawStripFooter,
@@ -108,6 +113,8 @@ function LayoutPicker({
 type CameraSessionProps = {
   photos: PhotoSlots
   layout: PhotoLayout
+  effect: CameraEffectId
+  onEffectChange: (effect: CameraEffectId) => void
   retakeSlot: number | null
   onPhoto: (index: number, dataUrl: string) => void
   onDesign: () => void
@@ -118,6 +125,8 @@ type CameraSessionProps = {
 function CameraSession({
   photos,
   layout,
+  effect,
+  onEffectChange,
   retakeSlot,
   onPhoto,
   onDesign,
@@ -143,6 +152,7 @@ function CameraSession({
 
   const [timerSeconds, setTimerSeconds] =
     useState<TimerOption>(3)
+  const [effectsOpen, setEffectsOpen] = useState(false)
 
   const runId = useRef(0)
   const feedbackTimer = useRef<number | null>(null)
@@ -250,7 +260,7 @@ function CameraSession({
         if (runId.current !== id) return
       }
 
-      const image = capturePhoto(video)
+      const image = capturePhoto(video, effect)
 
       onPhoto(index, image)
       setFreshPhoto(index)
@@ -294,6 +304,7 @@ function CameraSession({
   }
 
   function handleCapture() {
+    setEffectsOpen(false)
     if (retakeSlot !== null) {
       void takeShot(retakeSlot, true)
     } else if (selectedRetake !== null) {
@@ -322,6 +333,9 @@ function CameraSession({
     <section
       className="booth-session"
       aria-label="Photobooth capture"
+      style={{
+        '--camera-effect': getCameraEffect(effect).filter,
+      } as CSSProperties}
     >
       <button
         type="button"
@@ -438,6 +452,51 @@ function CameraSession({
             </svg>
           </button>
 
+          <button
+            type="button"
+            className="booth-effects-toggle"
+            onClick={() => setEffectsOpen((open) => !open)}
+            aria-expanded={effectsOpen}
+            aria-controls={
+              effectsOpen
+                ? 'booth-effects-panel'
+                : undefined
+            }
+            disabled={busy}
+          >
+            Effects
+          </button>
+
+          {effectsOpen && (
+            <div
+              id="booth-effects-panel"
+              className="booth-effects-panel"
+              role="group"
+              aria-label="Camera effects"
+            >
+              {CAMERA_EFFECTS.map((option) => (
+                <button
+                  type="button"
+                  key={option.id}
+                  className="booth-effect-option"
+                  aria-pressed={effect === option.id}
+                  onClick={() => {
+                    onEffectChange(option.id)
+                    setEffectsOpen(false)
+                  }}
+                  disabled={busy}
+                >
+                  <span
+                    className="booth-effect-swatch"
+                    style={{ filter: option.filter }}
+                    aria-hidden="true"
+                  />
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          )}
+
           {selectedPhoto !== null && (
             <button
               type="button"
@@ -468,8 +527,6 @@ function CameraSession({
               {captureError}
             </p>
           )}
-
-
         </div>
       </aside>
 
@@ -749,6 +806,8 @@ export function Photobooth() {
 
   const [layoutId, setLayoutId] =
     useState<PhotoLayoutId>('4-cut')
+  const [cameraEffect, setCameraEffect] =
+    useState<CameraEffectId>('original')
 
   const [retakeSlot, setRetakeSlot] =
     useState<number | null>(null)
@@ -830,6 +889,7 @@ export function Photobooth() {
 
   function resetSession() {
     setLayoutId('4-cut')
+    setCameraEffect('original')
     setPhotos(Array(PHOTO_COUNT).fill(null))
     setRetakeSlot(null)
     setStage('layout')
@@ -921,6 +981,8 @@ export function Photobooth() {
             photos={photos}
             layout={layout}
             retakeSlot={retakeSlot}
+            effect={cameraEffect}
+            onEffectChange={setCameraEffect}
             onPhoto={savePhoto}
             onDesign={designStrip}
             onCancelRetake={cancelReviewRetake}

@@ -1,4 +1,3 @@
-
 /** Browser camera operations. No React dependencies. */
 
 // Match the aspect ratio of each photo in the final strip.
@@ -8,6 +7,43 @@ export const CAPTURE_HEIGHT = 658
 // Preserve detail without storing excessively large photos.
 const MAX_CAPTURE_WIDTH = 1920
 const JPEG_QUALITY = 0.95
+
+export type CameraEffectId =
+  | 'original'
+  | 'mono'
+  | 'sepia'
+  | 'vintage'
+  | 'warm'
+  | 'cool'
+
+export const CAMERA_EFFECTS: ReadonlyArray<{
+  id: CameraEffectId
+  label: string
+  filter: string
+}> = [
+  { id: 'original', label: 'Original', filter: 'none' },
+  { id: 'mono', label: 'Mono', filter: 'grayscale(1)' },
+  { id: 'sepia', label: 'Sepia', filter: 'sepia(0.95)' },
+  {
+    id: 'vintage',
+    label: 'Vintage',
+    filter: 'sepia(0.45) saturate(0.78) contrast(1.08) brightness(1.04)',
+  },
+  {
+    id: 'warm',
+    label: 'Warm',
+    filter: 'sepia(0.22) saturate(1.14) brightness(1.02)',
+  },
+  {
+    id: 'cool',
+    label: 'Cool',
+    filter: 'hue-rotate(12deg) saturate(0.82) brightness(1.04)',
+  },
+]
+
+export function getCameraEffect(id: CameraEffectId) {
+  return CAMERA_EFFECTS.find((effect) => effect.id === id) ?? CAMERA_EFFECTS[0]
+}
 
 export async function startCamera(): Promise<MediaStream> {
   if (!navigator.mediaDevices?.getUserMedia) {
@@ -75,12 +111,17 @@ export function stopCamera(stream: MediaStream): void {
 }
 
 /**
- * Capture the same centered composition shown by the viewfinder.
+ * Capture the same centered composition and selected filter shown by the
+ * viewfinder. The effect is baked into the saved JPEG; strip.ts only draws
+ * these photos and does not need to apply filters a second time.
  *
  * Preserve native cropped resolution whenever possible.
  * A low-resolution camera should not be artificially upscaled.
  */
-export function capturePhoto(video: HTMLVideoElement): string {
+export function capturePhoto(
+  video: HTMLVideoElement,
+  effectId: CameraEffectId = 'original',
+): string {
   if (
     video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA ||
     !video.videoWidth ||
@@ -140,6 +181,9 @@ export function capturePhoto(video: HTMLVideoElement): string {
   // High-quality image scaling when downsampling is necessary.
   context.imageSmoothingEnabled = true
   context.imageSmoothingQuality = 'high'
+
+  // Apply the same CSS filter that is visible on the live video.
+  context.filter = getCameraEffect(effectId).filter
 
   // Preserve the mirrored selfie appearance.
   context.translate(outputWidth, 0)
