@@ -1,0 +1,863 @@
+/* PicTayo — Photo Booth camera UI */
+
+/* Page and window */
+.booth-capture-page {
+  min-height: 100dvh;
+  height: auto;
+  overflow: visible;
+  background: #ffffff;
+  color: #242424;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.booth-capture-page .booth-page {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 100dvh;
+  height: auto;
+  /* Reserve room on the right for the external photo preview rail. */
+  padding: 18px 178px 18px 12px;
+  overflow: visible;
+}
+
+.booth-capture-page .booth-session {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 30px auto minmax(56px, auto);
+  grid-template-areas: 'title' 'camera' 'controls';
+  align-items: stretch;
+  gap: 0;
+  width: min(100%, 860px);
+  min-width: 0;
+  min-height: 0;
+  height: auto;
+  max-height: none;
+  padding: 0;
+  /* The photo rail sits outside this device, so do not clip it. */
+  overflow: visible;
+  border: 1px solid #a9a9a9;
+  border-radius: 10px;
+  background: #050505;
+  box-shadow: 0 8px 26px rgb(0 0 0 / 14%);
+}
+
+.booth-capture-page .booth-session::before {
+  content: 'Photo Booth';
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  border-radius: 9px 9px 0 0;
+  border-bottom: 1px solid #b8b8b8;
+  background: #e1e1e1;
+  color: #444;
+  font-size: 12px;
+  font-weight: 500;
+  pointer-events: none;
+}
+
+.booth-capture-page .booth-session::after {
+  content: '';
+  position: absolute;
+  top: 9px;
+  left: 32px;
+  width: 32px;
+  height: 12px;
+  background:
+    radial-gradient(circle, #ffbd2e 0 5px, transparent 5.5px) 0 0 / 12px 12px no-repeat,
+    radial-gradient(circle, #28c840 0 5px, transparent 5.5px) 20px 0 / 12px 12px no-repeat;
+  pointer-events: none;
+}
+
+/*
+ * The red window dot is an actual button, not a decorative gradient.
+ * It triggers the existing Start over confirmation workflow.
+ */
+.booth-capture-page .booth-window-close {
+  position: absolute;
+  z-index: 5;
+  top: 2px;
+  left: 6px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 26px;
+  min-width: 24px;
+  min-height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+  cursor: pointer;
+}
+
+.booth-capture-page .booth-window-close::before {
+  content: '';
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #ff5f57;
+}
+
+.booth-capture-page .booth-window-close::after {
+  content: '×';
+  position: relative;
+  color: #76201c;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  opacity: 0;
+}
+
+.booth-capture-page .booth-window-close:hover::after,
+.booth-capture-page .booth-window-close:focus-visible::after {
+  opacity: 1;
+}
+
+.booth-capture-page .booth-window-close:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+.booth-capture-page .booth-window-close:focus-visible {
+  outline: 2px solid #2679ee;
+  outline-offset: 1px;
+}
+
+/* Camera: the viewfinder and captured photo share one crop ratio. */
+.booth-capture-page .booth-camera-frame {
+  position: relative;
+  z-index: 1;
+  grid-area: camera;
+  display: block;
+  container-type: normal;
+  width: 100%;
+  height: auto;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: #050505;
+  box-shadow: none;
+}
+
+.booth-capture-page .booth-camera-frame::before,
+.booth-capture-page .booth-camera-frame::after {
+  content: none;
+  display: none;
+}
+
+.booth-capture-page .booth-camera-frame .camera-window {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  max-width: none;
+  max-height: none;
+  aspect-ratio: 1088 / 658;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: #050505;
+  box-shadow: none;
+}
+
+.booth-capture-page .booth-camera-frame .camera-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transform: scaleX(-1);
+  filter: var(--camera-effect, none);
+}
+
+/* A captured thumbnail already confirms success; no separate popup. */
+.booth-capture-page .booth-saved-feedback {
+  display: none;
+}
+
+/* Keep the full live preview visible while counting down. */
+.booth-capture-page .countdown-overlay {
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: 16px;
+  background: transparent;
+  pointer-events: none;
+}
+
+/* Small countdown in the upper-right, away from the pose. */
+.booth-capture-page .countdown-number {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgb(255 255 255 / 22%);
+  border-radius: 10px;
+  background: rgb(0 0 0 / 55%);
+  color: #fff;
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+  animation: none;
+}
+
+/* The existing gentle shutter flash still covers the full preview. */
+.booth-capture-page .countdown-overlay:has(.flash-screen) {
+  padding: 0;
+  background: transparent;
+}
+
+/* Minimal floating photo previews outside the camera window. */
+.booth-capture-page .booth-gallery {
+  position: absolute;
+  z-index: 2;
+  grid-area: auto;
+  top: 40px;
+  left: calc(100% + 14px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  width: 126px;
+  height: auto;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.booth-capture-page .booth-shots-row {
+  /* Flex overrides the inline grid columns on desktop. */
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  gap: 10px;
+  margin: 0;
+  background: transparent;
+}
+
+.booth-capture-page .booth-shots-row .shot-thumb {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  height: auto;
+  min-height: 0;
+  aspect-ratio: 1088 / 658;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #e0e0e5;
+  border-radius: 6px;
+  background: #f5f5f7;
+  color: #8b8b91;
+  box-shadow: none;
+  opacity: 1;
+  transform: none;
+  cursor: default;
+  transition: border-color 140ms ease, background-color 140ms ease;
+}
+
+.booth-capture-page .booth-shots-row .shot-thumb-filled:not(:disabled) {
+  cursor: pointer;
+}
+
+.booth-capture-page .booth-shots-row .shot-thumb:not(:disabled):hover {
+  transform: none;
+  border-color: #a9a9b2;
+  background: #eeeeF1;
+}
+
+.booth-capture-page .booth-shots-row .shot-thumb img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+
+.booth-capture-page .booth-shots-row .shot-thumb-number {
+  color: #92929a;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+/* Only the selected thumbnail gets the red accent. */
+.booth-capture-page .booth-shots-row .shot-thumb-selected::after {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  border: 2px solid #ff555d;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.booth-capture-page .booth-shots-row .shot-thumb-selected {
+  box-shadow: none;
+}
+
+/* Retake icon appears on hover, focus, or selection. */
+.booth-capture-page .booth-shots-row .shot-retake-indicator {
+  position: absolute;
+  z-index: 3;
+  right: 5px;
+  bottom: 5px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 93%);
+  color: #333;
+  font-size: 13px;
+  line-height: 1;
+  box-shadow: none;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease;
+}
+
+.booth-capture-page .booth-shots-row .shot-thumb:hover .shot-retake-indicator,
+.booth-capture-page .booth-shots-row .shot-thumb:focus-visible .shot-retake-indicator,
+.booth-capture-page .booth-shots-row .shot-thumb-selected .shot-retake-indicator {
+  opacity: 1;
+}
+
+.booth-capture-page .booth-shots-row .shot-thumb .booth-retake-text,
+.booth-capture-page .booth-shots-row .shot-thumb:hover .booth-retake-text,
+.booth-capture-page .booth-shots-row .shot-thumb:focus-visible .booth-retake-text {
+  display: none;
+}
+
+.booth-capture-page .booth-shots-row .shot-thumb:focus-visible {
+  outline: 2px solid #2679ee;
+  outline-offset: 2px;
+}
+
+/* Flat toolbar, centered shutter, room for Continue or Cancel. */
+.booth-capture-page .booth-controls {
+  position: relative;
+  z-index: 1;
+  grid-area: controls;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 74px minmax(0, 1fr);
+  align-items: center;
+  justify-items: stretch;
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  min-height: 56px;
+  padding: 7px 14px;
+  gap: 8px;
+  overflow: visible;
+  border: 0;
+  /* Rounded bottom corners belong to the window, not an inner card. */
+  border-radius: 0 0 9px 9px;
+  background: #e0e0e0;
+  box-shadow: none;
+}
+
+.booth-capture-page .booth-controls::before,
+.booth-capture-page .booth-controls::after {
+  content: none;
+  display: none;
+}
+
+.booth-capture-page .booth-controls-top {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  gap: 0;
+}
+
+/* Retain live announcements without showing 0 / 4 or TIMER. */
+.booth-capture-page .booth-progress,
+.booth-capture-page .booth-help,
+.booth-capture-page .digicam-timer-label {
+  position: absolute;
+  display: block;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.booth-capture-page .digicam-timer {
+  display: flex;
+  align-items: center;
+  width: auto;
+  gap: 0;
+}
+
+.booth-capture-page .digicam-timer-options {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  padding: 2px;
+  gap: 0;
+  border: 1px solid #bcbcbc;
+  border-radius: 6px;
+  background: #ededed;
+  box-shadow: none;
+}
+
+.booth-capture-page .digicam-timer-button {
+  display: grid;
+  place-items: center;
+  min-width: 33px;
+  height: 24px;
+  min-height: 24px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #4c4c4c;
+  font-size: 11px;
+  font-weight: 500;
+  box-shadow: none;
+  transform: none;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.booth-capture-page .digicam-timer-button-active,
+.booth-capture-page .digicam-timer-button-active:hover:not(:disabled) {
+  background: #fff;
+  color: #222;
+}
+
+.booth-capture-page .booth-controls-bottom {
+  grid-column: 3;
+  grid-row: 1;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  justify-self: end;
+  width: auto;
+  max-width: 100%;
+  min-width: 0;
+  gap: 5px;
+}
+
+/* Flat central shutter. */
+.booth-capture-page .booth-controls .booth-shutter {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  min-height: 46px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 50%;
+  background: #ff4d54;
+  color: #fff;
+  box-shadow: none;
+  transform: translate(-50%, -50%);
+  transition: background-color 140ms ease, transform 120ms ease;
+}
+
+.booth-capture-page .booth-shutter::before,
+.booth-capture-page .booth-shutter::after {
+  content: none;
+  display: none;
+}
+
+.booth-capture-page .booth-controls .booth-shutter:hover:not(:disabled) {
+  background: #ff5a60;
+  transform: translate(-50%, -50%);
+}
+
+.booth-capture-page .booth-controls .booth-shutter:active:not(:disabled) {
+  background: #ed434a;
+  transform: translate(-50%, -50%) scale(.94);
+}
+
+.booth-capture-page .booth-controls .booth-shutter:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.booth-capture-page .booth-camera-icon {
+  display: block;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #fff;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  box-shadow: none;
+  pointer-events: none;
+}
+
+.booth-capture-page .booth-controls .booth-next-button,
+.booth-capture-page .booth-controls .booth-cancel-retake {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  align-self: center;
+  width: max-content;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 28px;
+  height: auto;
+  padding: 5px 11px;
+  border: 1px solid #bcbcbc;
+  border-radius: 5px;
+  background: #f4f4f4;
+  color: #444;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  box-shadow: none;
+  transform: none;
+}
+
+.booth-capture-page .booth-controls .booth-next-button:hover:not(:disabled),
+.booth-capture-page .booth-controls .booth-cancel-retake:hover:not(:disabled) {
+  border-color: #aaa;
+  background: #fff;
+  color: #222;
+  box-shadow: none;
+  transform: none;
+}
+
+.booth-capture-page .booth-controls .booth-next-button {
+  font-weight: 600;
+}
+
+.booth-capture-page .inline-error {
+  width: 100%;
+  max-width: 190px;
+  margin: 0;
+  color: #982d37;
+  font-size: 11px;
+  text-align: right;
+}
+
+.booth-capture-page button:focus-visible {
+  outline: 2px solid #2d7ff9;
+  outline-offset: 2px;
+}
+
+/* Keep the outside rail compact on medium desktop / tablet widths. */
+@media (min-width: 761px) and (max-width: 1020px) {
+  .booth-capture-page .booth-page {
+    padding-right: 136px;
+  }
+
+  .booth-capture-page .booth-gallery {
+    left: calc(100% + 10px);
+    width: 100px;
+    padding: 0;
+  }
+
+  .booth-capture-page .booth-shots-row {
+    gap: 6px;
+  }
+}
+
+/* On phones the thumbnails return below the preview to preserve space. */
+@media (max-width: 760px) {
+  .booth-capture-page .booth-page {
+    padding: 10px 8px;
+  }
+
+  .booth-capture-page .countdown-overlay {
+    padding: 10px;
+  }
+
+  .booth-capture-page .countdown-number {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    font-size: 22px;
+  }
+
+  .booth-capture-page .booth-session {
+    grid-template-rows: 30px auto 52px minmax(58px, auto);
+    grid-template-areas: 'title' 'camera' 'gallery' 'controls';
+    width: min(100%, 700px);
+    overflow: hidden;
+  }
+
+  .booth-capture-page .booth-gallery {
+    position: relative;
+    grid-area: gallery;
+    top: auto;
+    left: auto;
+    width: 100%;
+    height: 52px;
+    padding: 5px 0;
+    align-items: stretch;
+    justify-content: center;
+    overflow: hidden;
+    border: 0;
+    border-block: 1px solid #e7e7eb;
+    border-radius: 0;
+    background: #ffffff;
+  }
+
+  .booth-capture-page .booth-shots-row {
+    /* Preserve the existing inline repeat(count, 1fr) columns. */
+    display: grid;
+    flex-direction: initial;
+    width: min(100%, 315px);
+    height: 100%;
+    gap: 6px;
+    background: transparent;
+  }
+
+  .booth-capture-page .booth-shots-row:has(> .shot-thumb:nth-child(3):last-child) {
+    width: min(100%, 234px);
+  }
+
+  .booth-capture-page .booth-shots-row .shot-thumb {
+    height: 100%;
+    aspect-ratio: auto;
+    border: 1px solid #e0e0e5;
+    border-radius: 4px;
+    background: #f5f5f7;
+  }
+
+  .booth-capture-page .booth-controls {
+    min-height: 58px;
+    grid-template-columns: minmax(0, 1fr) 64px minmax(0, 1fr);
+    padding: 7px 9px;
+    gap: 5px;
+  }
+
+  .booth-capture-page .digicam-timer-button {
+    min-width: 30px;
+    padding: 0 6px;
+    font-size: 10px;
+  }
+
+  .booth-capture-page .booth-controls .booth-shutter {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    min-height: 42px;
+  }
+
+  .booth-capture-page .booth-controls .booth-next-button,
+  .booth-capture-page .booth-controls .booth-cancel-retake {
+    min-height: 26px;
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .booth-capture-page .booth-session {
+    grid-template-rows: 30px auto 48px minmax(62px, auto);
+  }
+
+  .booth-capture-page .booth-gallery {
+    height: 48px;
+  }
+
+  .booth-capture-page .booth-shots-row {
+    width: min(100%, 292px);
+  }
+
+  .booth-capture-page .booth-shots-row:has(> .shot-thumb:nth-child(3):last-child) {
+    width: min(100%, 217px);
+  }
+
+  .booth-capture-page .booth-controls {
+    min-height: 62px;
+    grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1fr);
+    padding: 7px 8px;
+    gap: 4px;
+  }
+
+  .booth-capture-page .booth-controls .booth-shutter {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .booth-capture-page .booth-controls:has(.booth-next-button),
+  .booth-capture-page .booth-controls:has(.booth-cancel-retake) {
+    min-height: 76px;
+  }
+}
+
+@media (hover: none) {
+  .booth-capture-page .booth-shots-row .shot-thumb-filled:not(.shot-thumb-selected) .shot-retake-indicator {
+    opacity: .7;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  .booth-capture-page .booth-page {
+    place-items: start center;
+    padding: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .booth-capture-page .booth-shutter,
+  .booth-capture-page .shot-thumb,
+  .booth-capture-page .shot-retake-indicator,
+  .booth-capture-page .digicam-timer-button {
+    transition: none;
+  }
+}
+
+
+/* Camera effects: compact toolbar control and flat selection tray. */
+.booth-capture-page .booth-controls .booth-effects-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 68px;
+  min-height: 28px;
+  padding: 5px 10px;
+  border: 1px solid #bcbcbc;
+  border-radius: 5px;
+  background: #f4f4f4;
+  color: #444;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  box-shadow: none;
+  transform: none;
+}
+
+.booth-capture-page .booth-controls .booth-effects-toggle:hover:not(:disabled),
+.booth-capture-page .booth-controls .booth-effects-toggle[aria-expanded='true'] {
+  border-color: #a8a8a8;
+  background: #fff;
+  color: #202020;
+}
+
+.booth-capture-page .booth-effects-panel {
+  position: absolute;
+  z-index: 8;
+  right: 12px;
+  bottom: calc(100% + 8px);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  width: min(290px, calc(100vw - 24px));
+  padding: 8px;
+  border: 1px solid #dedee3;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 8px 18px rgb(0 0 0 / 13%);
+}
+
+.booth-capture-page .booth-effect-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  min-height: 70px;
+  padding: 6px;
+  border: 1px solid #e5e5e8;
+  border-radius: 5px;
+  background: #fafafa;
+  color: #333;
+  font-size: 10px;
+  font-weight: 500;
+  box-shadow: none;
+  transform: none;
+}
+
+.booth-capture-page .booth-effect-option:hover:not(:disabled) {
+  border-color: #bbb;
+  background: #f5f5f7;
+}
+
+.booth-capture-page .booth-effect-option[aria-pressed='true'] {
+  border-color: #ff4d54;
+  background: #fff5f5;
+  color: #252525;
+}
+
+.booth-capture-page .booth-effect-swatch {
+  display: block;
+  width: 100%;
+  height: 34px;
+  border-radius: 3px;
+  background: linear-gradient(120deg, #c8a084 0 36%, #7ba49a 36% 69%, #a9b4bc 69%);
+}
+
+.booth-capture-page .booth-effect-option:focus-visible,
+.booth-capture-page .booth-effects-toggle:focus-visible {
+  outline: 2px solid #2679ee;
+  outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+  .booth-capture-page .booth-controls .booth-effects-toggle {
+    min-width: 56px;
+    min-height: 26px;
+    padding: 4px 7px;
+    font-size: 10px;
+  }
+
+  .booth-capture-page .booth-effects-panel {
+    right: 6px;
+    width: min(260px, calc(100vw - 24px));
+  }
+}
