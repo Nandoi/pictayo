@@ -1,6 +1,6 @@
 
 /*
- * PicTayo — iPod-Inspired Camera V4
+ * PicTayo — Camera UI
  *
  * Pearl-white body, slim silver LCD edge,
  * matte click wheel and minimal photo previews.
@@ -852,5 +852,21 @@
     height: 70px;
     min-width: 70px;
     min-height: 70px;
+  }
+}
+
+/* Preserve compact controls on smaller displays. */
+@media (max-width: 820px) {
+  .booth-capture-page .booth-controls-bottom {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+}
+
+/* Keep short screens scrollable and controls accessible. */
+@media (max-height: 650px) {
+  .booth-capture-page .booth-page {
+    place-items: start center;
   }
 }

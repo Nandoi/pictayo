@@ -18,10 +18,6 @@ import type {
   PhotoSlots,
   StripTheme,
 } from './strip'
-import './capture-feedback.css'
-import './restart-confirmation.css'
-import './download-feedback.css'
-import './photo-layouts.css'
 
 const FLASH_DURATION = 750
 const SAVED_FEEDBACK_DURATION = 1800

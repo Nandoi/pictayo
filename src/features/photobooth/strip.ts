@@ -1,5 +1,4 @@
 
-import './strip-layout.css'
 
 export const STRIP_WIDTH = 1200
 export const STRIP_HEIGHT = 3200
