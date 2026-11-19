@@ -5,7 +5,7 @@
   min-height: 100dvh;
   height: auto;
   overflow: visible;
-  background: #1b1b1d;
+  background: #ffffff;
   color: #242424;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
@@ -222,10 +222,7 @@
   background: transparent;
 }
 
-/*
- * Photo previews sit OUTSIDE the right edge of the Photo Booth window.
- * Keep each preview the same shape as the saved camera photo.
- */
+/* Minimal floating photo previews outside the camera window. */
 .booth-capture-page .booth-gallery {
   position: absolute;
   z-index: 2;
@@ -235,27 +232,27 @@
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  width: 144px;
+  width: 126px;
   height: auto;
   min-width: 0;
   min-height: 0;
-  padding: 8px;
+  padding: 0;
   overflow: visible;
-  border: 1px solid #3b3b3e;
-  border-radius: 8px;
-  background: #242426;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   box-shadow: none;
 }
 
 .booth-capture-page .booth-shots-row {
-  /* Flex ignores the old inline grid column count on desktop. */
+  /* Flex overrides the inline grid columns on desktop. */
   display: flex;
   flex-direction: column;
   align-items: stretch;
   width: 100%;
   height: auto;
   min-height: 0;
-  gap: 8px;
+  gap: 10px;
   margin: 0;
   background: transparent;
 }
@@ -272,14 +269,15 @@
   aspect-ratio: 1088 / 658;
   padding: 0;
   overflow: hidden;
-  border: 1px solid #515155;
-  border-radius: 4px;
-  background: #111113;
+  border: 1px solid #e0e0e5;
+  border-radius: 6px;
+  background: #f5f5f7;
+  color: #8b8b91;
   box-shadow: none;
   opacity: 1;
   transform: none;
   cursor: default;
-  transition: border-color 140ms ease;
+  transition: border-color 140ms ease, background-color 140ms ease;
 }
 
 .booth-capture-page .booth-shots-row .shot-thumb-filled:not(:disabled) {
@@ -288,7 +286,8 @@
 
 .booth-capture-page .booth-shots-row .shot-thumb:not(:disabled):hover {
   transform: none;
-  border-color: #9e9ea2;
+  border-color: #a9a9b2;
+  background: #eeeeF1;
 }
 
 .booth-capture-page .booth-shots-row .shot-thumb img {
@@ -302,19 +301,20 @@
 }
 
 .booth-capture-page .booth-shots-row .shot-thumb-number {
-  color: #a6a6a9;
-  font-size: 11px;
+  color: #92929a;
+  font-size: 10px;
   font-weight: 500;
   letter-spacing: 0;
 }
 
-/* Draw selection above the photo itself. */
+/* Only the selected thumbnail gets the red accent. */
 .booth-capture-page .booth-shots-row .shot-thumb-selected::after {
   content: '';
   position: absolute;
   z-index: 2;
   inset: 0;
-  border: 2px solid #ff5b61;
+  border: 2px solid #ff555d;
+  border-radius: inherit;
   pointer-events: none;
 }
 
@@ -322,12 +322,12 @@
   box-shadow: none;
 }
 
-/* The retake affordance appears on interaction, not on every photo. */
+/* Retake icon appears on hover, focus, or selection. */
 .booth-capture-page .booth-shots-row .shot-retake-indicator {
   position: absolute;
   z-index: 3;
-  right: 4px;
-  bottom: 4px;
+  right: 5px;
+  bottom: 5px;
   display: grid;
   place-items: center;
   width: 20px;
@@ -336,8 +336,8 @@
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background: rgb(255 255 255 / 90%);
-  color: #222;
+  background: rgb(255 255 255 / 93%);
+  color: #333;
   font-size: 13px;
   line-height: 1;
   box-shadow: none;
@@ -359,8 +359,8 @@
 }
 
 .booth-capture-page .booth-shots-row .shot-thumb:focus-visible {
-  outline: 2px solid #fff;
-  outline-offset: -3px;
+  outline: 2px solid #2679ee;
+  outline-offset: 2px;
 }
 
 /* Flat toolbar, centered shutter, room for Continue or Cancel. */
@@ -599,9 +599,8 @@
 
   .booth-capture-page .booth-gallery {
     left: calc(100% + 10px);
-    width: 112px;
-    padding: 6px;
-    gap: 6px;
+    width: 100px;
+    padding: 0;
   }
 
   .booth-capture-page .booth-shots-row {
@@ -640,40 +639,36 @@
     left: auto;
     width: 100%;
     height: 52px;
-    padding: 0;
+    padding: 5px 0;
     align-items: stretch;
     justify-content: center;
     overflow: hidden;
     border: 0;
-    border-block: 1px solid #777;
+    border-block: 1px solid #e7e7eb;
     border-radius: 0;
-    background: #080808;
+    background: #ffffff;
   }
 
   .booth-capture-page .booth-shots-row {
-    /* Mobile uses the existing inline repeat(count, 1fr) grid setting. */
+    /* Preserve the existing inline repeat(count, 1fr) columns. */
     display: grid;
     flex-direction: initial;
-    width: min(100%, 333px);
+    width: min(100%, 315px);
     height: 100%;
-    gap: 0;
-    background: #080808;
+    gap: 6px;
+    background: transparent;
   }
 
   .booth-capture-page .booth-shots-row:has(> .shot-thumb:nth-child(3):last-child) {
-    width: min(100%, 249px);
+    width: min(100%, 234px);
   }
 
   .booth-capture-page .booth-shots-row .shot-thumb {
     height: 100%;
     aspect-ratio: auto;
-    border: 0;
-    border-right: 1px solid #888;
-    border-radius: 0;
-  }
-
-  .booth-capture-page .booth-shots-row .shot-thumb:first-child {
-    border-left: 1px solid #888;
+    border: 1px solid #e0e0e5;
+    border-radius: 4px;
+    background: #f5f5f7;
   }
 
   .booth-capture-page .booth-controls {
@@ -714,11 +709,11 @@
   }
 
   .booth-capture-page .booth-shots-row {
-    width: min(100%, 300px);
+    width: min(100%, 292px);
   }
 
   .booth-capture-page .booth-shots-row:has(> .shot-thumb:nth-child(3):last-child) {
-    width: min(100%, 225px);
+    width: min(100%, 217px);
   }
 
   .booth-capture-page .booth-controls {
